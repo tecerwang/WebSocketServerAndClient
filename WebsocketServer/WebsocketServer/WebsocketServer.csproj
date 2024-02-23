@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="WebSocketMiddleWare - Copy\**" />
+    <Content Remove="WebSocketMiddleWare - Copy\**" />
+    <EmbeddedResource Remove="WebSocketMiddleWare - Copy\**" />
+    <None Remove="WebSocketMiddleWare - Copy\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\BroadcastMsg.js" />
+    <None Include="wwwroot\WebsocketClient.html" />
+    <None Include="wwwroot\WebSocketClient.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>
