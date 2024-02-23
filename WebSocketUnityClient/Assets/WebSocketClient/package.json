@@ -1,7 +1,7 @@
 {
     "name": "com.websocketclient.unity",
     "version": "0.0.1",
-    "displayName": "unity websocket client",
+    "displayName": "Unity3d WebSocket Client",
     "description": "Unity3d websocket client for the interaction with the websocket server in repo",
     "unity": "2019.1",
     "unityRelease": "0b5",
