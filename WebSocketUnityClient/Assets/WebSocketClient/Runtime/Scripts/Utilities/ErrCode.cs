@@ -29,7 +29,7 @@ namespace WebSocketClient
         /// </summary>
         public static int MasterIdIsNull = 11001;
         /// <summary>
-        /// master 已经下线
+        /// master name 为空
         /// </summary>
         public static int MasterNameIsNull = 11002;
         /// <summary>
