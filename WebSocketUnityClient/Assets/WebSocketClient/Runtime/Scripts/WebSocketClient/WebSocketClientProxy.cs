@@ -86,6 +86,7 @@ namespace WebSocketClient
             result.isComplete = false;
 
             result.isSuccessful = false;
+            // 此处为唯一的 clientId 赋值
             _clientId = GetClientConnectionId(clientSubName);
             var urlWithParam = wsUrl + "?clientId=" + _clientId;
             var task = WebSocketClient.Factory.CreateAndConnectAsync(urlWithParam);

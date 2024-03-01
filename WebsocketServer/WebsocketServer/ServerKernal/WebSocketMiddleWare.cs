@@ -7,23 +7,25 @@ using Newtonsoft.Json.Linq;
 using System.Text;
 using static WebSocketServer.ServiceLogic.ClientGroupBroadcastService;
 using Microsoft.AspNetCore.Components;
+using WebSocketServer.DataProvider;
 
 namespace WebSocketServer.ServerKernal
 {
     public class WebSocketMiddleWare : IMiddleware
     {
-        private IWebSocketDataProvider? _wsData;
+        private WebSocketClientData? _wsData;
         private IWebSocketLogic[]? _providers;
 
         public WebSocketMiddleWare()
         {
             // 创建一个数据提供者
-            this._wsData = new WebSocketData();
+            this._wsData = new WebSocketClientData();
 
-            // 启动两个服务
+            // 启动服务
             this._providers = new IWebSocketLogic[]
             {
                 new ClientGroupBroadcastService(),
+                new MasterSlavesGroupService(),
                 new ConnMonitorService()
             };
         }
@@ -36,31 +38,27 @@ namespace WebSocketServer.ServerKernal
                 {
                     string? clientId = context.Request.Query["clientId"];
                     WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    var connectedClients = _wsData?.connectedClients;
-                    if (!string.IsNullOrEmpty(clientId) && connectedClients != null && _providers != null)
+                    if (!string.IsNullOrEmpty(clientId) && _wsData != null)
                     {
-                        if (connectedClients.ContainsKey(clientId))
-                        {
-                            DebugLog.Print($"WebSocket connection already contains for client with ID: {clientId}, new connection will replace the old one");
-                            connectedClients?.Remove(clientId);
-                            foreach (var provider in _providers)
-                            {
-                                provider?.OnClientClose(clientId);
-                            }
-                        }
-
-                        DebugLog.Print($"WebSocket connection established for client with ID: {clientId}");
                         WebSocketClientConnection connection = new WebSocketClientConnection(clientId, Utility.GetCurrentUTC(), webSocket);
 
-                        connectedClients?.Add(connection.clientId, connection);
-                        foreach (var provider in _providers)
+                        if (_providers != null && await _wsData.GetConnectionById(clientId) != null)
                         {
-                            provider?.OnClientOpen(clientId, this);
+                            DebugLog.Print($"WebSocket connection already contains for client with ID: {clientId}, new connection will replace the old one");
+                            // 需要等待所有关闭链接 OnClientClose 处理完成
+                            Task.WaitAll(_providers.Select(p => p.OnClientClose(clientId)).ToArray());                          
                         }
-                        DebugLog.Print($"WebSocket connection add client connection with ID: {clientId}");
-
-                        /// 启动网络监听
-                        await Task.Run(() => ProcessWebSocketRequest(connection));
+                        /// 添加成功
+                        if (await _wsData.AddConnection(connection))
+                        {
+                            DebugLog.Print($"WebSocket connection add client connection with ID: {clientId}");
+                            if (_providers != null)
+                            {
+                                Task.WaitAll(_providers.Select(p => p.OnClientOpen(clientId, this)).ToArray());
+                            }
+                            /// 启动网络监听
+                            await Task.Run(() => ProcessWebSocketRequest(connection));
+                        }
                     }
                     else
                     {
@@ -82,9 +80,11 @@ namespace WebSocketServer.ServerKernal
 
         private async Task ProcessWebSocketRequest(WebSocketClientConnection connection)
         {
-            // Handle incoming messages
-            var connectedClients = _wsData?.connectedClients;
-            while (connection.webSocket.State == WebSocketState.Open && connectedClients != null)
+            if (_wsData == null)
+            {
+                return;
+            }
+            while (connection.webSocket.State == WebSocketState.Open)
             {
                 try
                 {
@@ -105,17 +105,16 @@ namespace WebSocketServer.ServerKernal
                         }
                         else if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            if (connectedClients.ContainsKey(connection.clientId))
+                            if (await _wsData.RemoveConnection(connection))
                             {
                                 DebugLog.Print($"WebSocket connection closed for client with ID: {connection.clientId}");
-                                connectedClients.Remove(connection.clientId);
                                 if (_providers != null)
                                 {
                                     foreach (var provider in _providers)
                                     {
                                         provider?.OnClientClose(connection.clientId);
                                     }
-                                }
+                                }                               
                                 connection.webSocket.Dispose();
                             }
                             break;
@@ -152,18 +151,20 @@ namespace WebSocketServer.ServerKernal
         /// <returns></returns>
         public async Task SendMsgToClientAsync(string? clientId, string msg)
         {
-            if (_wsData?.connectedClients == null)
+            if (_wsData == null || string.IsNullOrEmpty(clientId))
             {
                 return;
             }
-            if (!string.IsNullOrEmpty(clientId) && _wsData.connectedClients.TryGetValue(clientId, out WebSocketClientConnection? conn) && conn != null)
+            var conn = await _wsData.GetConnectionById(clientId);
+            if (conn == null)
             {
-                var webSocket = conn.webSocket;
-                if (webSocket != null && webSocket.State == WebSocketState.Open)
-                {
-                    byte[] buffer = Encoding.UTF8.GetBytes(msg);
-                    await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-                }
+                return;
+            }
+            var webSocket = conn.webSocket;
+            if (webSocket != null && webSocket.State == WebSocketState.Open)
+            {
+                byte[] buffer = Encoding.UTF8.GetBytes(msg);
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
             }
         }        
     }

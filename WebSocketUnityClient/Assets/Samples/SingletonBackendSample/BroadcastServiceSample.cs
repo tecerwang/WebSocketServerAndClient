@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using WebSocketClient;
 
-public class SingletonBackendSample : MonoBehaviour
+public class BroadcastServiceSample : MonoBehaviour
 {
     public Button BtnJoinInGroup;
     public Button BtnLeaveGroup;

@@ -6,17 +6,17 @@ using System.Text;
 using System.Threading.Tasks;
 using WebSocketServer.Utilities;
 
-namespace WebSocketServer.ServerKernal.Data
+namespace WebSocketServer.ServerKernal.MsgPack
 {
     /// <summary>
     /// 基础数据包
     /// </summary>
-    public abstract class MsgPack
+    internal abstract class MsgPack
     {
-        public string? clientId;
+        public required string clientId;
         public abstract string type { get; }
         public string? serviceName;
-        public JObject? data;
+        public JToken? data;
         public string? cmd;
         /// <summary>
         /// UTC Ticks
@@ -32,10 +32,15 @@ namespace WebSocketServer.ServerKernal.Data
         {
             try
             {
+                var clientId = JHelper.GetJsonString(rawData, "clientId");
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    return null;
+                }
                 MsgPack? pack = (MsgPack?)Activator.CreateInstance(typeof(T));
                 if (pack != null)
                 {
-                    pack.clientId = JHelper.GetJsonString(rawData, "clientId");
+                    pack.clientId = clientId;
                     pack.serviceName = JHelper.GetJsonString(rawData, "serviceName");
                     pack.cmd = JHelper.GetJsonString(rawData, "cmd");
                     pack.data = JHelper.GetJsonObject(rawData, "data");
@@ -57,7 +62,7 @@ namespace WebSocketServer.ServerKernal.Data
 
         public virtual JObject ToJson()
         {
-            JObject? obj = new JObject();
+            JObject obj = new JObject();
             obj.Add("clientId", clientId);
             obj.Add("serviceName", serviceName);
             obj.Add("cmd", cmd);
@@ -70,7 +75,7 @@ namespace WebSocketServer.ServerKernal.Data
         }
     }
 
-    public class RequestPack : MsgPack
+    internal class RequestPack : MsgPack
     {
         public int rid { get; private set; }
 
@@ -94,13 +99,13 @@ namespace WebSocketServer.ServerKernal.Data
         }
     }
 
-    public class ResponsePack : MsgPack
+    internal class ResponsePack : MsgPack
     {
         public override string type => "response";
         public int? rid; // request id;
         public int? errCode;
 
-        public static ResponsePack CreateFromRequest(RequestPack request, JObject? data, int errCode)
+        public static ResponsePack CreateFromRequest(RequestPack request, JToken? data, int errCode)
         {
             return new ResponsePack()
             {
@@ -134,7 +139,7 @@ namespace WebSocketServer.ServerKernal.Data
         }
     }
 
-    public class NotifyPack : MsgPack
+    internal class NotifyPack : MsgPack
     {
         public override string type => "notify";
         public static NotifyPack? Parse(JObject rawData)

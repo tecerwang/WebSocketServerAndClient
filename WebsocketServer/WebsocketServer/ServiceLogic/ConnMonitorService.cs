@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WebSocketServer.ServerKernal.Data;
+using WebSocketServer.ServerKernal.MsgPack;
 using WebSocketServer.Utilities;
 
 namespace WebSocketServer.ServiceLogic
@@ -13,9 +13,9 @@ namespace WebSocketServer.ServiceLogic
     /// 1.如果网络心跳超时，复制通知 server 关闭连接
     /// 2.todo:可扩展短线重连的业务逻辑
     /// </summary>
-    class ConnMonitorService : AbstractServiceLogic
+    internal class ConnMonitorService : AbstractServiceLogic
     {
-        public override string serviceName => "ConnMonitorService";
+        internal override string serviceName => "ConnMonitorService";
 
         protected override Task OnClientOpen(string clientId)
         {

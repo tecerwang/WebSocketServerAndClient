@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebSocketServer.ServerKernal;
-using WebSocketServer.ServerKernal.Data;
+using WebSocketServer.ServerKernal.MsgPack;
 using WebSocketServer.Utilities;
 
 namespace WebSocketServer.ServiceLogic
@@ -14,12 +14,12 @@ namespace WebSocketServer.ServiceLogic
     /// Server Logic Handler，
     /// 所有 service 处理逻辑需要继承这个接口
     /// </summary>
-    public abstract class AbstractServiceLogic : IWebSocketLogic
-    {      
+    internal abstract class AbstractServiceLogic : IWebSocketLogic
+    {
         /// <summary>
         /// 服务名称
         /// </summary>
-        public abstract string serviceName { get; }
+        internal abstract string serviceName { get; }
 
         private WebSocketMiddleWare? wsMiddleWare;
 
@@ -31,18 +31,18 @@ namespace WebSocketServer.ServiceLogic
 
         // 接口继承下来方法会阻塞线程，这在个 logic 方法中需要使用异步方法，如果需要同步，需要 override 一个 await 方法
 
-        void IWebSocketLogic.OnClientOpen(string clientId, WebSocketMiddleWare ws)
+        async Task IWebSocketLogic.OnClientOpen(string clientId, WebSocketMiddleWare ws)
         {
             wsMiddleWare = ws;
-            _= OnClientOpen(clientId);
+            await OnClientOpen(clientId);
         }
 
-        void IWebSocketLogic.OnClientClose(string clientId)
+        async Task IWebSocketLogic.OnClientClose(string clientId)
         {
-            _= OnClientClose(clientId);
-        }       
+            await OnClientClose(clientId);
+        }
 
-        void IWebSocketLogic.OnMessageRecieved(string receivedMessage)
+        async Task IWebSocketLogic.OnMessageRecieved(string receivedMessage)
         {
             if (string.IsNullOrEmpty(receivedMessage))
             {
@@ -56,7 +56,7 @@ namespace WebSocketServer.ServiceLogic
             var requesetPack = RequestPack.Parse(rawData);
             if (requesetPack != null && requesetPack.serviceName == serviceName)
             {
-                _ = OnMessageRecieved(requesetPack);
+                await OnMessageRecieved(requesetPack);
             }
         }
 
@@ -67,7 +67,7 @@ namespace WebSocketServer.ServiceLogic
         /// <param name="msg"></param>
         /// <param name="errCode"></param>
         /// <returns></returns>
-        protected async Task CreateResponseToClient(RequestPack request, JObject? data, int errCode)
+        protected async Task CreateResponseToClient(RequestPack request, JToken? data, int errCode)
         {
             if (wsMiddleWare == null || request == null)
             {
@@ -78,7 +78,7 @@ namespace WebSocketServer.ServiceLogic
             await wsMiddleWare.SendMsgToClientAsync(request.clientId, msg);
         }
 
-        protected async Task CreateNotifyToClient(string clientId, string serviceName, string cmd, JObject data)
+        protected async Task CreateNotifyToClient(string clientId, string serviceName, string cmd, JToken? data)
         {
             if (wsMiddleWare == null)
             {             

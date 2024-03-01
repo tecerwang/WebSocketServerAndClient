@@ -196,7 +196,7 @@ namespace WebSocketClient
               
                 if (_clientWS.State == WebSocketState.Open)
                 {
-                    _clientWS.Abort();
+                    await _clientWS.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, string.Empty, CancellationToken.None);
                 }
 
                 _recoveryConnTimes++;
@@ -236,7 +236,7 @@ namespace WebSocketClient
                     timeOutCancellation.CancelAfter(TimeoutMS);
                     var bytes = System.Text.Encoding.UTF8.GetBytes(message);
                     await _clientWS.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, timeOutCancellation.Token);
-                    Utility.LogDebug("WebsocketClient",$"--> {message}");
+                    Utility.LogInternalDebug("WebsocketClient",$"--> {message}");
                     isSendMsgSuccessful = true;
                 }
                 catch (Exception ex)
@@ -330,7 +330,7 @@ namespace WebSocketClient
                     }
                     try
                     {
-                        Utility.LogDebug("WebsocketClient", $"<-- {receivedMessage}");
+                        Utility.LogInternalDebug("WebsocketClient", $"<-- {receivedMessage}");
                         var data = JObject.Parse(receivedMessage);
                         if (data == null)
                         {

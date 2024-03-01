@@ -6,18 +6,18 @@
         /// 连接打开
         /// </summary>
         /// <param name="cliendId"></param>
-        public void OnClientOpen(string clientId, WebSocketMiddleWare ws);
+        public Task OnClientOpen(string clientId, WebSocketMiddleWare ws);
 
         /// <summary>
         /// 连接关闭
         /// </summary>
         /// <param name="cliendId"></param>
-        public void OnClientClose(string clientId);
+        public Task OnClientClose(string clientId);
 
         /// <summary>
         /// 当收到消息
         /// </summary>
         /// <param name="cliendId"></param>
-        public void OnMessageRecieved(string msg);
+        public Task OnMessageRecieved(string msg);
     }
 }

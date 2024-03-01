@@ -8,6 +8,7 @@ namespace WebSocketServer.Utilities
 {
     static class BackendOps
     {
+        #region ClientGroupBroadcastService
         /// <summary>
         /// 加入分组
         /// </summary>
@@ -22,6 +23,38 @@ namespace WebSocketServer.Utilities
         /// 广播消息
         /// </summary>
         public const string Cmd_BroadcastMsg = "BroadcastMsg";
+        #endregion
+
+        #region CentralControllerService
+        /// <summary>
+        /// 注册一个 Master
+        /// </summary>
+        public static string Cmd_RegisterAsMaster = "RegisterAsMaster";
+        /// <summary>
+        /// 注销一个 Master
+        /// </summary>
+        public static string Cmd_UnregisterFromMaster = "UnregisterFromMaster";
+        /// <summary>
+        /// 当Master集合发生变化，增加，删减，修改
+        /// </summary>
+        public static string Notify_OnMasterCollectionChanged = "OnMasterCollectionChanged";
+        /// <summary>
+        /// 获取所有master
+        /// </summary>
+        public static string Cmd_GetAllMasters = "GetAllMasters";
+        /// <summary>
+        /// 注册一个slave
+        /// </summary>
+        public static string Cmd_RegisterAsSlave = "RegisterAsSlave";
+        /// <summary>
+        /// 注销一个slave
+        /// </summary>
+        public static string Cmd_UnregisterFromSlave = "UnregisterFromSlave";
+        /// <summary>
+        /// 发送消息
+        /// </summary>
+        public static string Cmd_Broadcast = "Broadcast";
+        #endregion
 
         /// <summary>
         /// 网络心跳

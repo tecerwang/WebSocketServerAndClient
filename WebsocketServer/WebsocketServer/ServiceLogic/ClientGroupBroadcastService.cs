@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WebSocketServer.ServerKernal.Data;
+using WebSocketServer.ServerKernal.MsgPack;
 using WebSocketServer.Utilities;
 
 namespace WebSocketServer.ServiceLogic
@@ -12,33 +12,33 @@ namespace WebSocketServer.ServiceLogic
     /// <summary>
     /// 同组 client 广播通讯逻辑
     /// </summary>
-    class ClientGroupBroadcastService : AbstractServiceLogic
+    internal class ClientGroupBroadcastService : AbstractServiceLogic
     {
         /// <summary>
         /// 协议所发送的消息
         /// </summary>
-        public class Data
+        internal class Data
         {
             /// <summary>
             /// 组群ID
             /// </summary>
-            public string? groupId;
+            internal string? groupId;
             /// <summary>
             /// 客户端的名称
             /// </summary>
-            public string? clientName;
+            internal string? clientName;
             /// <summary>
             /// 需要广播的消息
             /// </summary>
-            public string? msg;
+            internal string? msg;
             /// <summary>
             /// 是否再广播消息群中
             /// </summary>
-            public bool isInGroup;
+            internal bool isInGroup;
 
             public override int GetHashCode() => (groupId + "_" + clientName).GetHashCode();
 
-            public static Data? Parse(JToken? jdata)
+            internal static Data? Parse(JToken? jdata)
             {
                 if (jdata == null)
                 {
@@ -52,7 +52,7 @@ namespace WebSocketServer.ServiceLogic
                 return data;
             }
 
-            public JObject ToJson()
+            internal JObject ToJson()
             {
                 JObject jobj = new JObject();
                 jobj.Add("groupId", groupId);
@@ -63,7 +63,7 @@ namespace WebSocketServer.ServiceLogic
             }
         }
 
-        public override string serviceName => "ClientGroupBroadcastService";
+        internal override string serviceName => "ClientGroupBroadcastService";
 
         /// <summary>
         /// 分好组的 clients
@@ -156,6 +156,7 @@ namespace WebSocketServer.ServiceLogic
                             await CreateNotifyToClient(cid, serviceName, request.cmd, jdata);
                             DebugLog.Print($"ClientGroupBroadcastService BroadcastMsg to client: {cid} OK");
                         }
+                        // 组内所有 client 接收到消息后，返回OK
                         DebugLog.Print($"ClientGroupBroadcastService BroadcastMsg end");
                         await CreateResponseToClient(request, jdata, ErrCode.OK);
                     }
