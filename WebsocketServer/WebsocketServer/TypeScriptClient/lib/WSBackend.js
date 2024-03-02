@@ -43,12 +43,6 @@ var WebsocketTSClient;
         function WSBackend(_backendUrl) {
             this._backendUrl = _backendUrl;
             this._isInited = false;
-            //public CreateBackendRequest(serviceName: string, cmd: string, data: any): WebSocketClientProxy.ProxyResult | null {
-            //    if (!this._wsClientProxy || this._wsClientProxy.State !== WebSocketClientProxy.ClientState.open) {
-            //        return null;
-            //    }
-            //    return this._wsClientProxy.SendRequest(serviceName, cmd, data);
-            //}
             /**
               * ws 连接状态变化
               */
@@ -61,8 +55,8 @@ var WebsocketTSClient;
             * ws 收到 Notify
             */
             this.OnNotify = [];
-            var uid = WebsocketTSClient.Utility.GenerateUniqueId();
-            this._wsClient = new WebsocketTSClient.WebSocketClient(this._backendUrl, uid);
+            this._uid = WebsocketTSClient.Utility.GenerateUniqueId();
+            this._wsClient = new WebsocketTSClient.WebSocketClient(this._backendUrl, this._uid);
             this._wsClient.AddStateChangedHandler(this.OnWSClientStateChanged);
             this._wsClient.AddMessageReceivedHandler(this.OnWSClientMsgRecieved);
         }
@@ -109,20 +103,44 @@ var WebsocketTSClient;
             });
         };
         WSBackend.prototype.OnWSClientStateChanged = function (state) {
-            this.OnStateChanged.forEach(function (handler) { handler(state); });
+            if (this.OnStateChanged != null) {
+                this.OnStateChanged.forEach(function (handler) { handler(state); });
+            }
         };
         WSBackend.prototype.OnWSClientMsgRecieved = function (msg) {
             var jobj = JSON.parse(msg);
             if (jobj != null) {
                 if (jobj.type == "response") {
-                    // 收到response
-                    this.OnResponse.forEach(function (handler) { handler(jobj); });
+                    if (this.OnResponse != null) {
+                        // 收到response
+                        this.OnResponse.forEach(function (handler) { handler(jobj); });
+                    }
                 }
                 else if (jobj.type == "notify") {
-                    // 收到notify
-                    this.OnNotify.forEach(function (handler) { handler(jobj); });
+                    if (this.OnNotify != null) {
+                        // 收到notify
+                        this.OnNotify.forEach(function (handler) { handler(jobj); });
+                    }
                 }
             }
+        };
+        /**
+         * 创建一个请求
+         * @param serviceName
+         * @param cmd
+         * @param data
+         * @returns
+         */
+        WSBackend.prototype.CreateBackendRequest = function (serviceName, cmd, data) {
+            if (this._wsClient == null || !this._wsClient.IsConnected) {
+                return -1;
+            }
+            var pack = new WebsocketTSClient.RequestPack(this._uid);
+            pack.serviceName = serviceName;
+            pack.cmd = cmd;
+            pack.data = data;
+            this._wsClient.SendMsg(JSON.stringify(pack));
+            return pack.rid;
         };
         /**
          * ws 连接状态变化，添加事件

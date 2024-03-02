@@ -35,7 +35,7 @@ namespace WebSocketClient
             /// <summary>
             /// 操作完成回调
             /// </summary>
-            public Action<ProxyResult> onComplete;
+            public Action<bool> onComplete;
             /// <summary>
             /// 操作是否结束
             /// </summary>
@@ -120,7 +120,7 @@ namespace WebSocketClient
             }
 
             result.isComplete = true;
-            result?.onComplete?.Invoke(result);
+            result?.onComplete?.Invoke(result.isSuccessful);
         }
 
         private IEnumerator CloseAsync(ProxyResult result)
@@ -150,7 +150,7 @@ namespace WebSocketClient
                 }
             }
             result.isComplete = true;
-            result?.onComplete?.Invoke(result);
+            result?.onComplete?.Invoke(result.isSuccessful);
         }
 
         private IEnumerator SendRequestAsync(JToken data, string serviceName, string cmd, int rid, ProxyResult result)
@@ -188,7 +188,7 @@ namespace WebSocketClient
                 }
             }
             result.isComplete = true;
-            result?.onComplete?.Invoke(result);
+            result?.onComplete?.Invoke(result.isSuccessful);
         }
 
         private IEnumerator HandleReceivedMsg()
@@ -215,7 +215,7 @@ namespace WebSocketClient
             if (result.isSuccessful)
             {
                 yield return new WaitForEndOfFrame();
-                result?.onComplete?.Invoke(result);
+                result?.onComplete?.Invoke(result.isSuccessful);
             }
         }
 

@@ -78,18 +78,13 @@ namespace WebSocketClient
         /// 开始连接服务器
         /// </summary>
         /// <returns></returns>
-        public async Task Connect2Server()
+        public async Task Connect2ServerAsync()
         {
             Utility.LogDebug("Backend", "Connect to ws server start");
-            TaskCompletionSource<bool> completeSource = new TaskCompletionSource<bool>();
-            Connect2Server(() =>
-            {
-                // 实例化连接监视器
-                _monitor = ConnMonitor.Create(this);
-                _monitor.Init();
-                completeSource.SetResult(true);
-            });
-            await completeSource.Task;
+            while (!await Connect2Server());
+            // 实例化连接监视器
+            _monitor = ConnMonitor.Create(this);
+            _monitor.Init();
         }
 
         private void WsClientProxy_OnClientStateChanged()
@@ -106,23 +101,25 @@ namespace WebSocketClient
             }
         }
 
-        private void Connect2Server(Action onComplete)
+        private async Task<bool> Connect2Server()
         {
-            _wsClientProxy.Connect().onComplete = (result) =>
+            TaskCompletionSource<bool> completeSource = new TaskCompletionSource<bool>();
+            _wsClientProxy.Connect().onComplete = (isSuccessful) =>
             {
-                if (result.isSuccessful)
+                if (isSuccessful)
                 {
                     Utility.LogDebug("Backend", "connect to ws server end");
                     State = WSBackendState.Open;
-                    onComplete?.Invoke();
+                    completeSource.SetResult(true);
                     WsClientProxy_OnClientStateChanged();
                 }
                 else
                 {
                     Utility.LogDebug("Backend", "connect to ws server fail,reconnect start");
-                    Connect2Server(onComplete);
+                    completeSource.SetResult(false);
                 }
             };
+            return await completeSource.Task;
         }
 
         private void WsClientProxy_OnClientProxyRecievedMsg(MsgPack data)

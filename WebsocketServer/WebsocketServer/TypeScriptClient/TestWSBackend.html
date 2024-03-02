@@ -6,6 +6,7 @@
     <script src="lib/Utility.js"></script>
     <script src="lib/WebsocketClient.js"></script>
     <script src="lib/WSBackend.js"></script>
+    <script src="lib/MsgPack.js"></script>
     <title>WebSocket Test</title>
 </head>
 <body>
@@ -26,7 +27,11 @@
             await wsBackend.Connect2Server();
             utility.LogDebug("[HTML]", "Connect to server end");
 
-         
+            var data = {
+                masterName: "tsMasterName"
+            };
+            var rid = wsBackend.CreateBackendRequest("MasterSlavesGroupService", "RegisterAsMaster", data);
+            utility.LogDebug("[HTML]", "request id is", rid);
         });
     </script>
 </body>

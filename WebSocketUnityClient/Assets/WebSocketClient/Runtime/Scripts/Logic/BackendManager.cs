@@ -46,7 +46,7 @@ namespace WebSocketClient
 
                 // managers 初始化完成
                 IsInited = true;
-                await WSBackend.singleton.Connect2Server();
+                await WSBackend.singleton.Connect2ServerAsync();
             }
         }
 

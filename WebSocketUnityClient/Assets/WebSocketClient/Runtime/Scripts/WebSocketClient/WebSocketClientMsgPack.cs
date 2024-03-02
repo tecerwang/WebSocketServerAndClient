@@ -108,8 +108,6 @@ namespace WebSocketClient
         {
             return ++requestId;
         }
-
-        
     }
 
     public class ResponsePack : MsgPack

@@ -20,21 +20,29 @@ var WebsocketTSClient;
             this.socket.onopen = function (event) {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connected');
                 _this.ClearReconnectTimer(); // 连接时清除计时器
-                _this.OnStateChanged.forEach(function (handler) { handler(true); });
+                if (_this.OnStateChanged != null) {
+                    _this.OnStateChanged.forEach(function (handler) { handler(true); });
+                }
             };
             this.socket.onmessage = function (event) {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] Message received:', event.data);
-                _this.OnMessageReceived.forEach(function (handler) { handler(event.data); });
+                if (_this.OnMessageReceived != null) {
+                    _this.OnMessageReceived.forEach(function (handler) { handler(event.data); });
+                }
             };
             this.socket.onclose = function (event) {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connection broken, reconnect start');
                 _this.ScheduleReconnect(); // 连接断开，开启断线重连
-                _this.OnStateChanged.forEach(function (handler) { handler(false); });
+                if (_this.OnStateChanged != null) {
+                    _this.OnStateChanged.forEach(function (handler) { handler(false); });
+                }
             };
             this.socket.onerror = function (error) {
                 console.error('[WebSocketClient] error:', error, "reconnect start");
                 _this.ScheduleReconnect(); // 连接错误，开启断线重连
-                _this.OnStateChanged.forEach(function (handler) { handler(false); });
+                if (_this.OnStateChanged != null) {
+                    _this.OnStateChanged.forEach(function (handler) { handler(false); });
+                }
             };
         };
         WebSocketClient.prototype.ScheduleReconnect = function () {

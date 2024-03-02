@@ -10,11 +10,12 @@
         private _isInited: boolean = false;
         private _monitor: ConnMonitor;
         private _wsClient: WebSocketClient;
+        private _uid: string;
 
         private constructor(private _backendUrl: string)
         {
-            var uid = Utility.GenerateUniqueId();
-            this._wsClient = new WebSocketClient(this._backendUrl, uid);
+            this._uid = Utility.GenerateUniqueId();
+            this._wsClient = new WebSocketClient(this._backendUrl, this._uid);
             this._wsClient.AddStateChangedHandler(this.OnWSClientStateChanged);
             this._wsClient.AddMessageReceivedHandler(this.OnWSClientMsgRecieved);
         }
@@ -58,7 +59,9 @@
         }     
 
         private OnWSClientStateChanged(state: boolean): void {
-            this.OnStateChanged.forEach(handler => { handler(state) });
+            if (this.OnStateChanged != null) {
+                this.OnStateChanged.forEach(handler => { handler(state) });
+            }
         }
 
         private OnWSClientMsgRecieved(msg: string): void {
@@ -66,23 +69,40 @@
             if (jobj != null) {
                 if (jobj.type == "response")
                 {
-                    // 收到response
-                    this.OnResponse.forEach(handler => { handler(jobj) });
+                    if (this.OnResponse != null) {
+                        // 收到response
+                        this.OnResponse.forEach(handler => { handler(jobj) });
+                    }
                 }
                 else if (jobj.type == "notify")
                 {
-                    // 收到notify
-                    this.OnNotify.forEach(handler => { handler(jobj) });
+                    if (this.OnNotify != null) {
+                        // 收到notify
+                        this.OnNotify.forEach(handler => { handler(jobj) });
+                    }
                 }
             }           
         }
 
-        //public CreateBackendRequest(serviceName: string, cmd: string, data: any): WebSocketClientProxy.ProxyResult | null {
-        //    if (!this._wsClientProxy || this._wsClientProxy.State !== WebSocketClientProxy.ClientState.open) {
-        //        return null;
-        //    }
-        //    return this._wsClientProxy.SendRequest(serviceName, cmd, data);
-        //}
+        /**
+         * 创建一个请求
+         * @param serviceName
+         * @param cmd
+         * @param data
+         * @returns
+         */
+        public CreateBackendRequest(serviceName: string, cmd: string, data: any): number {
+            if (this._wsClient == null || !this._wsClient.IsConnected) {
+                return -1;
+            }
+     
+            var pack = new RequestPack(this._uid);
+            pack.serviceName = serviceName;
+            pack.cmd = cmd;
+            pack.data = data;
+            this._wsClient.SendMsg(JSON.stringify(pack));
+            return pack.rid;
+        }
 
         /**
           * ws 连接状态变化

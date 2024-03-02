@@ -13,13 +13,15 @@
         }
     }
     export class RequestPack extends MsgPack {
-        rid: number;
 
-        constructor(clientId: string, rid: number) {
+        rid: number;
+        private static requestId: number = 0
+
+        constructor(clientId: string) {
             super();
             this.clientId = clientId;
-            this.rid = rid;
             this.utcTicks = Utility.UTCNowSeconds();
+            this.rid = ++RequestPack.requestId;
         }
 
         get type(): string {

@@ -22,11 +22,11 @@ var WebsocketTSClient;
     }());
     var RequestPack = /** @class */ (function (_super) {
         __extends(RequestPack, _super);
-        function RequestPack(clientId, rid) {
+        function RequestPack(clientId) {
             var _this = _super.call(this) || this;
             _this.clientId = clientId;
-            _this.rid = rid;
             _this.utcTicks = WebsocketTSClient.Utility.UTCNowSeconds();
+            _this.rid = ++RequestPack.requestId;
             return _this;
         }
         Object.defineProperty(RequestPack.prototype, "type", {
@@ -36,6 +36,7 @@ var WebsocketTSClient;
             enumerable: false,
             configurable: true
         });
+        RequestPack.requestId = 0;
         return RequestPack;
     }(MsgPack));
     WebsocketTSClient.RequestPack = RequestPack;

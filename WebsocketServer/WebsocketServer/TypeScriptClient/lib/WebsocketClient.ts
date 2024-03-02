@@ -16,24 +16,32 @@
             this.socket.onopen = (event: Event) => {
                 Utility.LogDebug('[WebSocketClient] connected');
                 this.ClearReconnectTimer(); // 连接时清除计时器
-                this.OnStateChanged.forEach(handler => { handler(true) });
+                if (this.OnStateChanged != null) {
+                    this.OnStateChanged.forEach(handler => { handler(true) });
+                }
             };
 
             this.socket.onmessage = (event: MessageEvent) => {
                 Utility.LogDebug('[WebSocketClient] Message received:', event.data);
-                this.OnMessageReceived.forEach(handler => { handler(event.data) });
+                if (this.OnMessageReceived != null) {
+                    this.OnMessageReceived.forEach(handler => { handler(event.data) });
+                }
             };
 
             this.socket.onclose = (event: CloseEvent) => {
                 Utility.LogDebug('[WebSocketClient] connection broken, reconnect start');
                 this.ScheduleReconnect(); // 连接断开，开启断线重连
-                this.OnStateChanged.forEach(handler => { handler(false) });
+                if (this.OnStateChanged != null) {
+                    this.OnStateChanged.forEach(handler => { handler(false) });
+                }
             };
 
             this.socket.onerror = (error: Event) => {
                 console.error('[WebSocketClient] error:', error, "reconnect start");
                 this.ScheduleReconnect(); // 连接错误，开启断线重连
-                this.OnStateChanged.forEach(handler => { handler(false) });
+                if (this.OnStateChanged != null) {
+                    this.OnStateChanged.forEach(handler => { handler(false) });
+                }
             };
         }
 
