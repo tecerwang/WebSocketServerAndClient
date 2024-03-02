@@ -8,23 +8,30 @@
 
   <ItemGroup>
     <Compile Remove="WebSocketMiddleWare - Copy\**" />
+    <Compile Remove="wwwroot\WebsocketHtmlClient\**" />
+    <Compile Remove="wwwroot\wsclient - 复制\**" />
+    <Compile Remove="wwwroot\wsclient\node_modules\**" />
     <Content Remove="WebSocketMiddleWare - Copy\**" />
+    <Content Remove="wwwroot\WebsocketHtmlClient\**" />
+    <Content Remove="wwwroot\wsclient - 复制\**" />
+    <Content Remove="wwwroot\wsclient\node_modules\**" />
     <EmbeddedResource Remove="WebSocketMiddleWare - Copy\**" />
+    <EmbeddedResource Remove="wwwroot\WebsocketHtmlClient\**" />
+    <EmbeddedResource Remove="wwwroot\wsclient - 复制\**" />
+    <EmbeddedResource Remove="wwwroot\wsclient\node_modules\**" />
     <None Remove="WebSocketMiddleWare - Copy\**" />
+    <None Remove="wwwroot\WebsocketHtmlClient\**" />
+    <None Remove="wwwroot\wsclient - 复制\**" />
+    <None Remove="wwwroot\wsclient\node_modules\**" />
+    <TypeScriptCompile Remove="wwwroot\wsclient\node_modules\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\BroadcastMsg.js" />
-    <None Include="wwwroot\WebsocketClient.html" />
-    <None Include="wwwroot\WebSocketClient.js" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.3.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\WsClient\" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="lib/Utility.js"></script>
+    <script src="lib/WebsocketClient.js"></script>
+    <script src="lib/WSBackend.js"></script>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <button id="connectBtn">Connect to WebSocket Server</button>
+    <script>
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            const backendUrl = 'ws://localhost:8080/ws'; // Change this to your WebSocket server URL
+           
+            var utility = WebsocketTSClient.Utility;
+
+            utility.LogDebug("[HTML]", "Create singleton backend start");
+            WebsocketTSClient.WSBackend.CreateSingleton(backendUrl);
+            utility.LogDebug("[HTML]", "Create singleton backend end");
+
+            var wsBackend = WebsocketTSClient.WSBackend.singleton;
+
+            utility.LogDebug("[HTML]", "Connect to server start");
+            await wsBackend.Connect2Server();
+            utility.LogDebug("[HTML]", "Connect to server end");
+
+         
+        });
+    </script>
+</body>
+</html>

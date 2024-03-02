@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="lib/WebsocketClient.js"></script>
+    <script src="lib/Utility.js"></script>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <input type="text" id="messageInput" placeholder="Enter message">
+    <button id="sendButton">Send Message</button>
+    <button id="closeButton">Close Connection</button>
+</body>
+</html>
+
+<script>
+    // Create a WebSocketClient instance
+    const client = new WebsocketTSClient.WebSocketClient("ws://localhost:8080/ws", "testClientHtml");
+    client.Connect();
+    // Add event handlers
+    client.AddStateChangedHandler((state) => {
+        console.log(`WebSocket connection state changed: ${state ? 'connected' : 'disconnected'}`);
+    });
+
+    client.AddMessageReceivedHandler((message) => {
+        console.log(`Message received: ${message}`);
+    });
+
+    // Send a test message
+    document.getElementById("sendButton").addEventListener("click", () => {
+        const message = document.getElementById("messageInput").value;
+        client.SendMsg(message);
+    });
+
+    // Close the WebSocket connection
+    document.getElementById("closeButton").addEventListener("click", () => {
+        client.Close();
+    });
+</script>
