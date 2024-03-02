@@ -12,6 +12,8 @@ namespace WebSocketClient
     /// </summary>
     public class BroadcastManager : BackendServiceManagerBase
     {
+        private const string serviceName = "ClientGroupBroadcastService";
+
         /// <summary>
         /// 协议所发送的消息
         /// </summary>
@@ -79,7 +81,7 @@ namespace WebSocketClient
 
         private void Singleton_OnBackendNotify(string serviceName, string cmd, JToken data)
         {
-            if (serviceName == WSBackend.ClientGroupBroadcastService)
+            if (serviceName == BroadcastManager.serviceName)
             {
                 // 收到广播消息
                 if (cmd == BackendOps.Cmd_BroadcastMsg)
@@ -112,7 +114,7 @@ namespace WebSocketClient
                     groupId = _groupId,
                     clientName = _clientName
                 };
-                _isQuarying = BackendRequest.CreateRetry(WSBackend.ClientGroupBroadcastService, BackendOps.Cmd_JoinGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
+                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_JoinGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
             }
         }
 
@@ -128,7 +130,7 @@ namespace WebSocketClient
                     groupId = _groupId,
                     clientName = _clientName
                 };
-                _isQuarying = BackendRequest.CreateRetry(WSBackend.ClientGroupBroadcastService, BackendOps.Cmd_LeaveGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
+                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_LeaveGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
             }
         }
 
@@ -159,7 +161,7 @@ namespace WebSocketClient
                     clientName = _clientName,
                     msg = msg
                 };
-                _isQuarying = BackendRequest.CreateRetry(WSBackend.ClientGroupBroadcastService, BackendOps.Cmd_BroadcastMsg, rdata.ToJson(), null, OnBroadcastResponse);
+                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_BroadcastMsg, rdata.ToJson(), null, OnBroadcastResponse);
             }
         }
 

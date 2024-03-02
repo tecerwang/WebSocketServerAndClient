@@ -9,7 +9,7 @@ using UnityEngine;
 namespace WebSocketClient
 {
     /// <summary>
-    /// 游戏管理 manager 逻辑
+    /// 管理游戏与服务器 ws 通信逻辑
     /// </summary>
     public class BackendManager : MonoBehaviour
     {

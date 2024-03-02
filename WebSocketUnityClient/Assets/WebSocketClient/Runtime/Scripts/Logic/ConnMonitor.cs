@@ -12,6 +12,8 @@ namespace WebSocketClient
     /// </summary>
     public class ConnMonitor
     {
+        private const string serviceName = "ConnMonitorService";
+
         /// <summary>
         /// 最后一次成功通讯的时间，如果长时间没有通讯，负责发送网络心跳
         /// </summary>
@@ -80,7 +82,7 @@ namespace WebSocketClient
                 if (curRealTime - _lastestWSTick > 5)
                 {
                     _lastestWSTick = curRealTime;
-                    _backend.CreateBackendRequest(WSBackend.ConnMonitorService, BackendOps.WSPing, null);
+                    _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
                 }
             }
         }

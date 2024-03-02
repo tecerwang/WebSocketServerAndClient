@@ -13,12 +13,6 @@ namespace WebSocketClient
     /// </summary>
     public class WSBackend
     {
-        public const string DefaultService = "DefaultService";
-
-        public const string ConnMonitorService = "ConnMonitorService";
-
-        public const string ClientGroupBroadcastService = "ClientGroupBroadcastService";
-
         public enum WSBackendState
         {
             Close,
