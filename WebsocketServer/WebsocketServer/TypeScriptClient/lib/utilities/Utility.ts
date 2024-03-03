@@ -2,17 +2,21 @@
 {
     const IsDebugEnv: boolean = true;
 
-    export class Utility {
-       
-        static GetCurrentUTC(): Date {
+    export class Utility 
+    {
+
+        static GetCurrentUTC(): Date
+        {
             return new Date();
         }
 
-        static UTCNowMilliseconds(): number {
+        static UTCNowMilliseconds(): number
+        {
             return Date.now();
         }
 
-        static UTCNowSeconds(): number {
+        static UTCNowSeconds(): number
+        {
             return Math.floor(Date.now() / 1000);
         }
 
@@ -20,13 +24,16 @@
          * @param utcTimeString like: 03:40:20
          * @param dateTimeKind DateTimeKind.Local or DateTimeKind.Utc
          */
-        static ParseUTCTimeString(utcTimeString: string, dateTimeKind: DateTimeKind = DateTimeKind.Local): Date | null {
-            if (!utcTimeString) {
+        static ParseUTCTimeString(utcTimeString: string, dateTimeKind: DateTimeKind = DateTimeKind.Local): Date | null
+        {
+            if (!utcTimeString)
+            {
                 return null;
             }
 
             const segments: string[] = utcTimeString.split(':');
-            if (!segments || segments.length !== 3) {
+            if (!segments || segments.length !== 3)
+            {
                 return null;
             }
 
@@ -38,7 +45,8 @@
             if (isNaN(hour) || isNaN(mins) || isNaN(secs) ||
                 hour < 0 || hour > 23 ||
                 mins < 0 || mins > 59 ||
-                secs < 0 || secs > 59) {
+                secs < 0 || secs > 59)
+            {
                 return null;
             }
 
@@ -47,7 +55,7 @@
         }
 
 
-        
+
         static LogDebug(...data: any[]): void
         {
             if (IsDebugEnv)
@@ -55,7 +63,8 @@
                 console.log(data);
             }
         }
-        static GenerateUniqueId(): string {
+        static GenerateUniqueId(): string
+        {
             // Get browser information
             const userAgent = "Browser";
             const random = Math.random().toString(36).substring(2, 10);
@@ -65,7 +74,8 @@
         }
     }
 
-    export enum DateTimeKind {
+    export enum DateTimeKind
+    {
         Local,
         Utc
     }

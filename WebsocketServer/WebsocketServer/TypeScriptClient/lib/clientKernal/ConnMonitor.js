@@ -7,4 +7,3 @@ var WebsocketTSClient;
     }());
     WebsocketTSClient.ConnMonitor = ConnMonitor;
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=ConnMonitor.js.map

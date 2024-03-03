@@ -5,44 +5,40 @@ var WebsocketTSClient;
             this.url = url;
             this.clientId = clientId;
             this.reconnectInterval = 2000; // 断线重连时间间隔
+            this._isConnectionOpen = false;
             /**
-             * ws 连接状态变化
-             */
-            this.OnStateChanged = [];
+          * ws 连接状态变化
+          */
+            this.OnStateChanged = new WebsocketTSClient.EventHandler();
             /**
              * ws 收到信息
              */
-            this.OnMessageReceived = [];
+            this.OnMessageReceived = new WebsocketTSClient.EventHandler();
         }
         WebSocketClient.prototype.Connect = function () {
             var _this = this;
             this.socket = new WebSocket(this.url + "?clientId=" + this.clientId);
             this.socket.onopen = function (event) {
+                _this._isConnectionOpen = true;
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connected');
                 _this.ClearReconnectTimer(); // 连接时清除计时器
-                if (_this.OnStateChanged != null) {
-                    _this.OnStateChanged.forEach(function (handler) { handler(true); });
-                }
+                _this.OnStateChanged.Trigger(true);
             };
             this.socket.onmessage = function (event) {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] Message received:', event.data);
-                if (_this.OnMessageReceived != null) {
-                    _this.OnMessageReceived.forEach(function (handler) { handler(event.data); });
-                }
+                _this.OnMessageReceived.Trigger(event.data);
             };
             this.socket.onclose = function (event) {
+                _this._isConnectionOpen = false;
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connection broken, reconnect start');
                 _this.ScheduleReconnect(); // 连接断开，开启断线重连
-                if (_this.OnStateChanged != null) {
-                    _this.OnStateChanged.forEach(function (handler) { handler(false); });
-                }
+                _this.OnStateChanged.Trigger(false);
             };
             this.socket.onerror = function (error) {
+                _this._isConnectionOpen = true;
                 console.error('[WebSocketClient] error:', error, "reconnect start");
                 _this.ScheduleReconnect(); // 连接错误，开启断线重连
-                if (_this.OnStateChanged != null) {
-                    _this.OnStateChanged.forEach(function (handler) { handler(false); });
-                }
+                _this.OnStateChanged.Trigger(false);
             };
         };
         WebSocketClient.prototype.ScheduleReconnect = function () {
@@ -63,40 +59,10 @@ var WebsocketTSClient;
             }
         };
         /**
-         * ws 连接状态变化，添加事件
-         */
-        WebSocketClient.prototype.AddStateChangedHandler = function (handler) {
-            this.OnStateChanged.push(handler);
-        };
-        /**
-         * ws 连接状态变化，移除事件
-         */
-        WebSocketClient.prototype.RmStateChangedHandler = function (handler) {
-            var index = this.OnStateChanged.indexOf(handler);
-            if (index !== -1) {
-                this.OnStateChanged.splice(index, 1);
-            }
-        };
-        /**
-         * 添加"ws 收到信息"事件
-         */
-        WebSocketClient.prototype.AddMessageReceivedHandler = function (handler) {
-            this.OnMessageReceived.push(handler);
-        };
-        /**
-         * 移除"ws 收到信息"事件
-         */
-        WebSocketClient.prototype.RmMessageReceivedHandler = function (handler) {
-            var index = this.OnMessageReceived.indexOf(handler);
-            if (index !== -1) {
-                this.OnMessageReceived.splice(index, 1);
-            }
-        };
-        /**
          * ws 是否正在连接中
          */
         WebSocketClient.prototype.IsConnected = function () {
-            return this.socket.readyState == this.socket.OPEN;
+            return this._isConnectionOpen;
         };
         /**
         * 发送消息
@@ -114,4 +80,3 @@ var WebsocketTSClient;
     }());
     WebsocketTSClient.WebSocketClient = WebSocketClient;
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=WebsocketClient.js.map

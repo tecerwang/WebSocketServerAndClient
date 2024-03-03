@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json.Linq;
+using WebSocketServer.Utilities;
 using static WebSocketServer.ServiceLogic.MasterSlavesGroupService;
 
-namespace WebSocketServer.DataProvider
+namespace WebSocketServer.DataService
 {
     internal class MasterSlavesGroupData
     {
@@ -44,7 +45,7 @@ namespace WebSocketServer.DataProvider
         {
             if (master != null && !string.IsNullOrEmpty(master.clientId))
             {
-                registeredMasters[master.clientId] = master;
+                registeredMasters[master.clientId] = master;               
             }
             await Task.CompletedTask;
         }

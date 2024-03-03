@@ -64,7 +64,7 @@ namespace WebSocketClient
                 _wsClientProxy = proxyObj.AddComponent<WebSocketClientProxy>();
                 _wsClientProxy.OnClientStateChanged += WsClientProxy_OnClientStateChanged;
                 _wsClientProxy.OnClientProxyRecievedMsg += WsClientProxy_OnClientProxyRecievedMsg;
-                _wsClientProxy.clientSubName = "wsClientSingletion";
+                _wsClientProxy.clientSubName = "wsClientSingleton";
                 _wsClientProxy.wsUrl = backendUrl;
                 _isInited = true;
             }
@@ -91,13 +91,19 @@ namespace WebSocketClient
         {
             if (_wsClientProxy.State == WebSocketClient.ClientState.open)
             {
-                State = WSBackendState.Open;
-                OnBackendStateChanged?.Invoke();
+                if (State != WSBackendState.Open)
+                {
+                    State = WSBackendState.Open;
+                    OnBackendStateChanged?.Invoke();
+                }
             }
             else
             {
-                State = WSBackendState.Close;
-                OnBackendStateChanged?.Invoke();
+                if (State != WSBackendState.Close)
+                {
+                    State = WSBackendState.Close;
+                    OnBackendStateChanged?.Invoke();
+                }
             }
         }
 
@@ -165,7 +171,7 @@ namespace WebSocketClient
             if (_wsClientProxy == null || _wsClientProxy.State != WebSocketClient.ClientState.open)
             {
                 return null;
-            }
+            }            
             return _wsClientProxy.SendRequest(serviceName, cmd, data);
         }
     }

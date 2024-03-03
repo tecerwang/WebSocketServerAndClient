@@ -71,4 +71,3 @@ var WebsocketTSClient;
     }(MsgPack));
     WebsocketTSClient.NotifyPack = NotifyPack;
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=MsgPack.js.map

@@ -4,6 +4,8 @@ using UnityEngine.Events;
 using Newtonsoft.Json.Linq;
 using System;
 using UIFramework;
+using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace WebSocketClient
 {
@@ -76,7 +78,7 @@ namespace WebSocketClient
 
         public override string ToString()
         {
-            return ToJson().ToString().Replace("\r\n", string.Empty);
+            return ToJson().ToString(Newtonsoft.Json.Formatting.None);
         }
 
         public const string RequestType = "requset";

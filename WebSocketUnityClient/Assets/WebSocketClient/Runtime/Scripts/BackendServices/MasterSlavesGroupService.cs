@@ -11,6 +11,14 @@ namespace WebSocketClient
 {
     public class MasterSlavesGroupService : BackendServiceManagerBase
     {
+        public enum ClientState
+        {
+            Idle,           
+            IsMaster,
+            IsSlave
+        }
+
+        public ClientState clientState { get; private set; } = ClientState.Idle;
 
         private bool _isQuarying = false;
         private const string serviceName = "MasterSlavesGroupService";
@@ -18,22 +26,22 @@ namespace WebSocketClient
         /// <summary>
         /// 注册成为 master
         /// </summary>
-        public event Action<bool> OnRegisteredAsMaster;
+        public event Action<int> OnRegisteredAsMaster;
 
         /// <summary>
         /// 注销 master
         /// </summary>
-        public event Action<bool> OnUnregisteredFromMaster;
+        public event Action<int> OnUnregisteredFromMaster;
 
         /// <summary>
         /// 注册成为 slave
         /// </summary>
-        public event Action<bool> OnRegisteredAsSlave;
+        public event Action<int> OnRegisteredAsSlave;
 
         /// <summary>
         /// 注销 slave
         /// </summary>
-        public event Action<bool> OnUnregisteredFromSlave;
+        public event Action<int> OnUnregisteredFromSlave;
 
         /// <summary>
         /// 服务器上的 master 集合发生变化
@@ -48,7 +56,7 @@ namespace WebSocketClient
         /// <summary>
         /// 广播消息完成
         /// </summary>
-        public event Action<bool> OnBroadcast;
+        public event Action<int> OnBroadcast;
 
         /// <summary>
         /// 收到别人发出的广播消息
@@ -62,9 +70,22 @@ namespace WebSocketClient
             await Task.CompletedTask;
         }
 
+        public override async Task Release()
+        {
+            WSBackend.singleton.OnBackendNotify -= Singleton_OnBackendNotify;
+            WSBackend.singleton.OnBackendStateChanged -= Singleton_OnBackendStateChanged;
+            await Task.CompletedTask;
+        }
+
         private void Singleton_OnBackendStateChanged()
         {
-
+            if (WSBackend.singleton.State == WSBackend.WSBackendState.Close)
+            {
+                // 断线后状态为空闲
+                clientState = ClientState.Idle;
+                _isQuarying = false;
+                Utility.LogDebug("MasterSlavesGroupService", "Connect Closed,become idle state");
+            }
         }
 
         private void Singleton_OnBackendNotify(string serviceName, string cmd, JToken data)
@@ -74,11 +95,13 @@ namespace WebSocketClient
                 // master collectoion on server changed
                 if (cmd == BackendOps.Notify_OnMasterCollectionChanged)
                 {
+                    Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed");
                     OnMasterCollectionChanged?.Invoke();
                 }
                 // 收到别人发送的消息
                 else if (cmd == BackendOps.Cmd_Broadcast)
                 {
+                    Utility.LogDebug("MasterSlavesGroupService", $"Recieved Broadcast msg {data}");
                     OnRecievedBroadcast?.Invoke(data);
                 }
             }
@@ -93,9 +116,11 @@ namespace WebSocketClient
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
+                clientState = ClientState.IsMaster;
                 JObject data = new JObject();
                 data.Add("masterName", masterName);
                 data.Add("masterData", null);
+                Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_RegisterAsMaster, data, null, OnRegisterMasterResponse);
             }
         }
@@ -103,7 +128,9 @@ namespace WebSocketClient
         private void OnRegisterMasterResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
-            OnRegisteredAsMaster?.Invoke(errCode == ErrCode.OK);
+            clientState = errCode == ErrCode.OK ? ClientState.IsMaster : ClientState.Idle;
+            Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster End", errCode);
+            OnRegisteredAsMaster?.Invoke(errCode);
         }
 
         /// <summary>
@@ -113,6 +140,8 @@ namespace WebSocketClient
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
+                _isQuarying = true;
+                Utility.LogDebug("MasterSlavesGroupService", "UnRegisterFromMaster Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_UnregisterFromMaster, null, null, OnUnregisterMasterResponse);
             }
         }
@@ -120,7 +149,9 @@ namespace WebSocketClient
         private void OnUnregisterMasterResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
-            OnUnregisteredFromMaster?.Invoke(errCode == ErrCode.OK);
+            clientState = errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsMaster;
+            Utility.LogDebug("MasterSlavesGroupService", "UnRegisterFromMaster End", errCode);
+            OnUnregisteredFromMaster?.Invoke(errCode);
         }
 
         /// <summary>
@@ -131,8 +162,10 @@ namespace WebSocketClient
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
+                clientState = ClientState.IsSlave;
                 JObject data = new JObject();
                 data.Add("masterId", masterId);
+                Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_RegisterAsSlave, data, null, OnRegisterSlaveResponse);
             }
         }
@@ -140,7 +173,9 @@ namespace WebSocketClient
         private void OnRegisterSlaveResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
-            OnRegisteredAsSlave?.Invoke(errCode == ErrCode.OK);
+            clientState = errCode == ErrCode.OK ? ClientState.IsSlave : ClientState.Idle;
+            Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave End", errCode);
+            OnRegisteredAsSlave?.Invoke(errCode);
         }
 
         public void UnregisterFromSlave()
@@ -148,6 +183,7 @@ namespace WebSocketClient
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
+                Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromSlave Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_UnregisterFromSlave, null, null, OnUnregisterSlaveResponse);
             }
         }
@@ -155,7 +191,9 @@ namespace WebSocketClient
         private void OnUnregisterSlaveResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
-            OnUnregisteredFromSlave?.Invoke(errCode == ErrCode.OK);
+            clientState = errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsSlave;
+            Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromSlave End", errCode);
+            OnUnregisteredFromSlave?.Invoke(errCode);
         }
 
         public void GetAllMasters()
@@ -163,6 +201,7 @@ namespace WebSocketClient
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
+                Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_GetAllMasters, null, null, OnGetAllMastersResponse);
             }
         }
@@ -170,6 +209,7 @@ namespace WebSocketClient
         private void OnGetAllMastersResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
+            Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters End", errCode);
             OnGetAllMasters?.Invoke(errCode, data);
         }
 
@@ -178,7 +218,7 @@ namespace WebSocketClient
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
-
+                Utility.LogDebug("MasterSlavesGroupService", "Broadcast Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_Broadcast, data, null, OnBroadcastResponse);
             }
         }
@@ -186,7 +226,8 @@ namespace WebSocketClient
         private void OnBroadcastResponse(int errCode, JToken data, object context)
         {
             _isQuarying = false;
-            OnBroadcast?.Invoke(errCode == ErrCode.OK);
+            Utility.LogDebug("MasterSlavesGroupService", "Broadcast End", errCode);
+            OnBroadcast?.Invoke(errCode);
         }
     }
 }

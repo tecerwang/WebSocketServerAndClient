@@ -14,12 +14,12 @@ namespace WebSocketServer.ServiceLogic
     /// Server Logic Handler，
     /// 所有 service 处理逻辑需要继承这个接口
     /// </summary>
-    internal abstract class AbstractServiceLogic : IWebSocketLogic
+    public abstract class AbstractServiceLogic : IWebSocketLogic
     {
         /// <summary>
         /// 服务名称
         /// </summary>
-        internal abstract string serviceName { get; }
+        public abstract string serviceName { get; }
 
         private WebSocketMiddleWare? wsMiddleWare;
 
@@ -74,7 +74,7 @@ namespace WebSocketServer.ServiceLogic
                 return;
             }
             var response = ResponsePack.CreateFromRequest(request, data, errCode);
-            var msg = response.ToJson().ToString().Replace("\r\n", string.Empty);
+            var msg = response.ToString();
             await wsMiddleWare.SendMsgToClientAsync(request.clientId, msg);
         }
 
@@ -92,7 +92,7 @@ namespace WebSocketServer.ServiceLogic
                 utcTicks = Utility.UTCNowSeconds(),
                 data = data
             };
-            var msg = notify.ToJson().ToString().Replace("\r\n", string.Empty);
+            var msg = notify.ToString();
             await wsMiddleWare.SendMsgToClientAsync(clientId, msg);
         }
     }

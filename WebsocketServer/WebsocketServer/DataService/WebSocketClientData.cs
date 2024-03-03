@@ -2,7 +2,7 @@
 using WebSocketServer.ServerKernal;
 using WebSocketServer.Utilities;
 
-namespace WebSocketServer.DataProvider
+namespace WebSocketServer.DataService
 {
     /// <summary>
     /// 运行在本机上的数据 Provider 实例

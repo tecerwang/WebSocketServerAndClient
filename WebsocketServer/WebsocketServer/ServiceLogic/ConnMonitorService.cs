@@ -13,9 +13,9 @@ namespace WebSocketServer.ServiceLogic
     /// 1.如果网络心跳超时，复制通知 server 关闭连接
     /// 2.todo:可扩展短线重连的业务逻辑
     /// </summary>
-    internal class ConnMonitorService : AbstractServiceLogic
+    public class ConnMonitorService : AbstractServiceLogic
     {
-        internal override string serviceName => "ConnMonitorService";
+        public override string serviceName => "ConnMonitorService";
 
         protected override Task OnClientOpen(string clientId)
         {
@@ -35,7 +35,6 @@ namespace WebSocketServer.ServiceLogic
             }
             if (request.cmd == BackendOps.WSPing)
             {
-                DebugLog.Print("[ConnMonitorService]", "recieve wsPing");
                 await CreateResponseToClient(request, null, ErrCode.OK);
             }
         }       

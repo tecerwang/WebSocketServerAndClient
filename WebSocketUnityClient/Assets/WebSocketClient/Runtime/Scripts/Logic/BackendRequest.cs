@@ -1,6 +1,8 @@
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UIFramework;
 using UnityEngine;
 
 namespace WebSocketClient
@@ -92,27 +94,32 @@ namespace WebSocketClient
         public static bool CreateRetry(string serviceName, string cmd, JToken data, object context, OnResponse onResponse, int retryTimes = -1)
         {
             /// 没有创建 backend 单例
-            if (WSBackend.singleton == null)
+            if (WSBackend.singleton != null && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
-                return false;
+                BackendRequest request = new BackendRequest();
+                request._responseDel = onResponse;
+                request._retryTimes = retryTimes;
+                request._requestContext = new RequestContext()
+                {
+                    serviceName = serviceName,
+                    cmd = cmd,
+                    data = data,
+                    context = context
+                };
+                try
+                {
+                    request.Request(request._requestContext);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    // 如果出错需要释放掉这个 request
+                    Utility.LogExpection(ex.ToString());
+                    request.Release();
+                }
             }
-
-            BackendRequest request = new BackendRequest();
-            request._responseDel = onResponse;
-            request._retryTimes = retryTimes;
-            request._requestContext = new RequestContext()
-            {
-                serviceName = serviceName,
-                cmd = cmd,
-                data = data,
-                context = context
-            };
-
-            if (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
-            {
-                request.Request(request._requestContext);
-            }
-            return true;
+            onResponse?.Invoke(ErrCode.Internal_RetryTimesOut, null, context);
+            return false;
         }
     }
 }

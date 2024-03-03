@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,20 +9,31 @@ using WebSocketClient;
 
 public class MasterSlavesGroupServiceSample : MonoBehaviour
 {
-    public Button btnTestProtocols;
+    public Button registerMasterBtn;
+    public Button unRegisterMasterBtn;
+    public Button registerSlaveBtn;
+    public Button unRegisterSlaveBtn;
+    public Button getAllMastersBtn;
+    public Button broadcastBtn;
     public InputField inputMasterName;
+    public InputField inputMasterId;
     public InputField inputBroadcast;
 
     // Start is called before the first frame update
     void Start()
     {
-        /// 一步一步测试
-        btnTestProtocols.onClick.AddListener(()=>
-        {
-            TestProtocols();           
-        });
+        ResetUIState();
 
-        ResetBtnText();
+        /// 一步一步测试
+        registerMasterBtn.onClick.AddListener(Click_RegisterAsMaster);
+        unRegisterMasterBtn.onClick.AddListener(Click_UnregisterFromMaster);
+        registerSlaveBtn.onClick.AddListener(Click_RegisterAsSlave);
+        unRegisterSlaveBtn.onClick.AddListener(Click_UnregisterFromSlave);
+        getAllMastersBtn.onClick.AddListener(Click_GetAllMasters);
+        broadcastBtn.onClick.AddListener(Click_BroadCast);
+
+
+        WSBackend.singleton.OnBackendStateChanged += Singleton_OnBackendStateChanged;
 
         BackendManager.singleton.msGroupManager.OnRegisteredAsMaster += MsGroupManager_OnRegisteredAsMaster;
         BackendManager.singleton.msGroupManager.OnUnregisteredFromMaster += MsGroupManager_OnUnregisteredFromMaster;
@@ -31,10 +43,12 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         BackendManager.singleton.msGroupManager.OnGetAllMasters += MsGroupManager_OnGetAllMasters;
         BackendManager.singleton.msGroupManager.OnBroadcast += MsGroupManager_OnBroadcast;
         BackendManager.singleton.msGroupManager.OnRecievedBroadcast += MsGroupManager_OnRecievedBroadcast;
-    }
+    }   
 
     private void OnDestroy()
     {
+        WSBackend.singleton.OnBackendStateChanged -= Singleton_OnBackendStateChanged;
+
         BackendManager.singleton.msGroupManager.OnRegisteredAsMaster -= MsGroupManager_OnRegisteredAsMaster;
         BackendManager.singleton.msGroupManager.OnUnregisteredFromMaster -= MsGroupManager_OnUnregisteredFromMaster;
         BackendManager.singleton.msGroupManager.OnRegisteredAsSlave -= MsGroupManager_OnRegisteredAsSlave;
@@ -45,140 +59,113 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         BackendManager.singleton.msGroupManager.OnRecievedBroadcast -= MsGroupManager_OnRecievedBroadcast;
     }
 
-    private enum ProtocalStep
-    {       
-        registerAsMaster,
-        getAllMasters,
-        registerAsSlave,
-        broadcastMsg,
-        unregisterAsSlave,
-        unregisterAsMaster,
-        complete
+    private void Singleton_OnBackendStateChanged()
+    {
+        ResetUIState();
     }
 
-
-    private int step = 0;
-
-    private void TestProtocols()
+    private void Click_RegisterAsMaster()
     {
-        // 注册一个 master
-        if (step == (int)ProtocalStep.registerAsMaster)
+        string masterName = inputMasterName.text;
+        if (!string.IsNullOrEmpty(masterName))
         {
-            string name = inputMasterName.text;
-            if (!string.IsNullOrEmpty(name))
-            {
-                BackendManager.singleton.msGroupManager.RegisterAsMaster(name);
-            }
-        }
-        // 获取到所有 master
-        else if (step == (int)ProtocalStep.getAllMasters)
-        {
-            BackendManager.singleton.msGroupManager.GetAllMasters();
-        }
-        // 注册一个 slave
-        else if (step == (int)ProtocalStep.registerAsSlave)
-        {
-            BackendManager.singleton.msGroupManager.RegisterAsSlave(name);
-        }
-        // 广播消息
-        else if (step == (int)ProtocalStep.broadcastMsg)
-        {
-            string msg = inputBroadcast.text;
-            if (!string.IsNullOrEmpty(msg))
-            {
-                BackendManager.singleton.msGroupManager.Broadcast(msg);
-            }
-        }
-        // 注销一个slave
-        else if (step == (int)ProtocalStep.unregisterAsSlave)
-        {
-            BackendManager.singleton.msGroupManager.UnregisterFromSlave();
-        }
-        // 注销一个master
-        else if (step == (int)ProtocalStep.unregisterAsMaster)
-        {
-            BackendManager.singleton.msGroupManager.UnRegisterFromMaster();
-        }
-        // 测试结束
-        else if (step == (int)ProtocalStep.complete)
-        {
-            step = 0;
-            ResetBtnText();
+            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName);
+            ResetUIState();
         }
     }
 
-    private void ResetBtnText()
+    private void MsGroupManager_OnRegisteredAsMaster(int errCode)
     {
-        btnTestProtocols.GetComponentInChildren<Text>().text = ((ProtocalStep)step).ToString();
+        ResetUIState();
     }
 
-    private void MsGroupManager_OnRecievedBroadcast(Newtonsoft.Json.Linq.JToken data)
+    private void Click_UnregisterFromMaster()
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnRecievedBroadcast", data);
+        BackendManager.singleton.msGroupManager.UnRegisterFromMaster();
+        ResetUIState();
     }
 
-    private void MsGroupManager_OnBroadcast(bool obj)
+    private void MsGroupManager_OnUnregisteredFromMaster(int errCode)
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnBroadcast", obj);
-        if (obj)
+        ResetUIState();
+    }
+
+    private void Click_RegisterAsSlave()
+    {
+        string masterId = inputMasterId.text;
+        if (!string.IsNullOrEmpty(masterId))
         {
-            step++;
-            ResetBtnText();
+            BackendManager.singleton.msGroupManager.RegisterAsSlave(masterId);
+            ResetUIState();
         }
+    }
+
+    private void MsGroupManager_OnRegisteredAsSlave(int errCode)
+    {
+        ResetUIState();
+    }
+
+    private void Click_UnregisterFromSlave()
+    {
+        BackendManager.singleton.msGroupManager.UnregisterFromSlave();
+        ResetUIState();
+    }
+
+    private void MsGroupManager_OnUnregisteredFromSlave(int errCode)
+    {
+        ResetUIState();
+    }
+
+    private void Click_BroadCast()
+    {
+        string msg = inputBroadcast.text;
+        if (!string.IsNullOrEmpty(msg))
+        {
+            JObject jobj = new JObject();
+            jobj.Add("msg", msg);
+            BackendManager.singleton.msGroupManager.Broadcast(jobj);
+        }
+    }
+
+    
+    private void MsGroupManager_OnBroadcast(int errCode)
+    {
+
+    }
+
+    private void Click_GetAllMasters()
+    {
+        BackendManager.singleton.msGroupManager.GetAllMasters();
     }
 
     private void MsGroupManager_OnGetAllMasters(int errCode, Newtonsoft.Json.Linq.JToken data)
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnGetAllMasters", errCode, data);
-        if (errCode == ErrCode.OK)
-        {
-            step++;
-            ResetBtnText();
-        }
+
     }
 
     private void MsGroupManager_OnMasterCollectionChanged()
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnMasterCollectionChanged");
+
     }
 
-    private void MsGroupManager_OnUnregisteredFromSlave(bool obj)
+    private void MsGroupManager_OnRecievedBroadcast(Newtonsoft.Json.Linq.JToken data)
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnUnregisteredFromSlave", obj);
-        if (obj)
-        {
-            step++;
-            ResetBtnText();
-        }
+
     }
 
-    private void MsGroupManager_OnRegisteredAsSlave(bool obj)
+    private void ResetUIState()
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnRegisteredAsSlave", obj);
-        if (obj)
-        {
-            step++;
-            ResetBtnText();
-        }
-    }
+        var clientState = BackendManager.singleton.msGroupManager.clientState;
 
-    private void MsGroupManager_OnUnregisteredFromMaster(bool obj)
-    {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnUnregisteredFromMaster", obj);
-        if (obj)
-        {
-            step++;
-            ResetBtnText();
-        }
-    }
+        registerMasterBtn.interactable = clientState == MasterSlavesGroupService.ClientState.Idle;
+        unRegisterMasterBtn.interactable = clientState == MasterSlavesGroupService.ClientState.IsMaster;
+        registerSlaveBtn.interactable = clientState == MasterSlavesGroupService.ClientState.Idle;
+        unRegisterSlaveBtn.interactable = clientState == MasterSlavesGroupService.ClientState.IsSlave;
+        getAllMastersBtn.interactable = true;
+        broadcastBtn.interactable = clientState != MasterSlavesGroupService.ClientState.Idle;
+        inputBroadcast.interactable = clientState != MasterSlavesGroupService.ClientState.Idle;
+        inputMasterName.interactable = clientState == MasterSlavesGroupService.ClientState.Idle;
+        inputMasterId.interactable = clientState == MasterSlavesGroupService.ClientState.Idle;
 
-    private void MsGroupManager_OnRegisteredAsMaster(bool obj)
-    {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnRegisteredAsMaster", obj);
-        if (obj)
-        {
-            step++;
-            ResetBtnText();
-        }
-    }
+    }   
 }

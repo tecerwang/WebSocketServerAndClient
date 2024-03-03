@@ -52,10 +52,18 @@ namespace WebSocketServer.Utilities
 
         public static void Print(params string[] args)
         {
+            if (args.Length == 0)
+            {
+                return;
+            }
+
+            var str = string.Empty;
             foreach (var arg in args)
             {
-                Console.WriteLine(arg);
+                str += arg + ", ";
             }
+            str = str.Substring(0, str.Length - 2);
+            Console.WriteLine(str);
             lock (msgPendding2Write2File)
             {
                 msgPendding2Write2File.Enqueue(args);

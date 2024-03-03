@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../lib/utilities/EventHandler.js"></script>
+    <script src="../lib/utilities/Utility.js"></script>
+    <script src="../lib/clientKernal/WebsocketClient.js"></script>
+    <script src="../lib/clientKernal/WSBackend.js"></script>
+    <script src="../lib/clientKernal/MsgPack.js"></script>
+    <script src="../lib/clientKernal/ErrCode.js"></script>
+    <script src="../lib/clientKernal/BackendRequest.js"></script>
+    <script src="../lib/clientKernal/BackendOps.js"></script>
+    <script src="../lib/mgr/MasterSlavesGroupService.js"></script>
+    <!-- 主程序js -->
+    <script src="TestMasterSlaveService.js"></script>
+
+    <title>Test MasterSlaveGroupService</title>
+
+    <style>
+        /* Your existing styles */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        #getAllMastersBtn {
+            background-color: yellow;
+            font-size: 1.5em;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+            #getAllMastersBtn:hover {
+                background-color: #ffff99;
+            }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+            .container:first-child {
+                background-color: lightyellow;
+                padding: 10px;
+            }
+
+            .container input[type="text"],
+            .container button {
+                margin: 5px;
+                padding: 8px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                font-size: 16px;
+            }
+
+            .container input[type="text"] {
+                width: 200px;
+            }
+
+            .container button {
+                cursor: pointer;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+            }
+
+                .container button:hover {
+                    background-color: #45a049;
+                }
+
+                /* Style for disabled button */
+                .container button:disabled {
+                    background-color: #ccc; /* Change background color */
+                    cursor: not-allowed; /* Change cursor */
+                    color: #666; /* Change text color */
+                }
+    </style>
+</head>
+<body>
+    <button id="getAllMastersBtn">Get All Masters</button>
+    <div class="container">
+        <div class="column">
+            <input type="text" id="inputMasterName" placeholder="Enter Master Name">
+            <button id="registerMasterBtn">Register Master</button>
+            <button id="unRegisterMasterBtn">Unregister Master</button>
+        </div>
+        <div class="column">
+            <input type="text" id="inputMasterId" placeholder="Enter Master ID">
+            <button id="registerSlaveBtn">Register Slave</button>
+            <button id="unRegisterSlaveBtn">Unregister Slave</button>
+        </div>
+        <div class="column">
+            <input type="text" id="inputBroadcast" placeholder="Enter Broadcast Message">
+            <button id="broadcastBtn">Broadcast</button>
+        </div>
+    </div>
+</body>
+</html>

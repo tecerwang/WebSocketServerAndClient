@@ -15,4 +15,3 @@ var WebsocketTSClient;
         DataIsNull: 11004
     };
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=ErrCode.js.map

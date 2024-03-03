@@ -12,33 +12,33 @@ namespace WebSocketServer.ServiceLogic
     /// <summary>
     /// 同组 client 广播通讯逻辑
     /// </summary>
-    internal class ClientGroupBroadcastService : AbstractServiceLogic
+    public class ClientGroupBroadcastService : AbstractServiceLogic
     {
         /// <summary>
         /// 协议所发送的消息
         /// </summary>
-        internal class Data
+        public class Data
         {
             /// <summary>
             /// 组群ID
             /// </summary>
-            internal string? groupId;
+            public string? groupId;
             /// <summary>
             /// 客户端的名称
             /// </summary>
-            internal string? clientName;
+            public string? clientName;
             /// <summary>
             /// 需要广播的消息
             /// </summary>
-            internal string? msg;
+            public string? msg;
             /// <summary>
             /// 是否再广播消息群中
             /// </summary>
-            internal bool isInGroup;
+            public bool isInGroup;
 
             public override int GetHashCode() => (groupId + "_" + clientName).GetHashCode();
 
-            internal static Data? Parse(JToken? jdata)
+            public static Data? Parse(JToken? jdata)
             {
                 if (jdata == null)
                 {
@@ -52,7 +52,7 @@ namespace WebSocketServer.ServiceLogic
                 return data;
             }
 
-            internal JObject ToJson()
+            public JObject ToJson()
             {
                 JObject jobj = new JObject();
                 jobj.Add("groupId", groupId);
@@ -63,14 +63,12 @@ namespace WebSocketServer.ServiceLogic
             }
         }
 
-        internal override string serviceName => "ClientGroupBroadcastService";
+        public override string serviceName => "ClientGroupBroadcastService";
 
         /// <summary>
         /// 分好组的 clients
         /// </summary>
         private Dictionary<string, HashSet<string>> GrouppedClients = new Dictionary<string, HashSet<string>>();
-
-       
 
         protected override Task OnClientOpen(string clientId)
         {

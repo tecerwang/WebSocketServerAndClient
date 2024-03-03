@@ -37,7 +37,7 @@ namespace WebSocketServer.Utilities
         /// <summary>
         /// 缺失数据包
         /// </summary>
-        public static int DataIsNull = 11004;
+        public static int DataIsNull = 11004;       
         #endregion
     }
 }

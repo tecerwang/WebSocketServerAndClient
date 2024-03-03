@@ -11,5 +11,7 @@ namespace WebSocketClient
     public abstract class BackendServiceManagerBase
     {
         public abstract Task Init();
+
+        public abstract Task Release();
     }
 }

@@ -7,27 +7,20 @@ using Newtonsoft.Json.Linq;
 using System.Text;
 using static WebSocketServer.ServiceLogic.ClientGroupBroadcastService;
 using Microsoft.AspNetCore.Components;
-using WebSocketServer.DataProvider;
+using WebSocketServer.DataService;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WebSocketServer.ServerKernal
 {
     public class WebSocketMiddleWare : IMiddleware
     {
         private WebSocketClientData? _wsData;
-        private IWebSocketLogic[]? _providers;
+        private IEnumerable<IWebSocketLogic>? _logicProviders;
 
-        public WebSocketMiddleWare()
+        public WebSocketMiddleWare(IServiceProvider serviceProvider)
         {
-            // 创建一个数据提供者
-            this._wsData = new WebSocketClientData();
-
-            // 启动服务
-            this._providers = new IWebSocketLogic[]
-            {
-                new ClientGroupBroadcastService(),
-                new MasterSlavesGroupService(),
-                new ConnMonitorService()
-            };
+            _wsData = serviceProvider.GetService<WebSocketClientData>();
+            _logicProviders = serviceProvider.GetServices<IWebSocketLogic>();            
         }
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -38,23 +31,24 @@ namespace WebSocketServer.ServerKernal
                 {
                     string? clientId = context.Request.Query["clientId"];
                     WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    if (!string.IsNullOrEmpty(clientId) && _wsData != null)
+                    if (!string.IsNullOrEmpty(clientId))
                     {
                         WebSocketClientConnection connection = new WebSocketClientConnection(clientId, Utility.GetCurrentUTC(), webSocket);
-
-                        if (_providers != null && await _wsData.GetConnectionById(clientId) != null)
+                        if (_logicProviders != null && await _wsData.GetConnectionById(clientId) != null)
                         {
                             DebugLog.Print($"WebSocket connection already contains for client with ID: {clientId}, new connection will replace the old one");
                             // 需要等待所有关闭链接 OnClientClose 处理完成
-                            Task.WaitAll(_providers.Select(p => p.OnClientClose(clientId)).ToArray());                          
+                            Task.WaitAll(_logicProviders.Select(p => p.OnClientClose(clientId)).ToArray());
+                            // 先移除原有的 connection，用新的 connection 替代
+                            await _wsData.RemoveConnection(clientId);
                         }
                         /// 添加成功
                         if (await _wsData.AddConnection(connection))
                         {
                             DebugLog.Print($"WebSocket connection add client connection with ID: {clientId}");
-                            if (_providers != null)
+                            if (_logicProviders != null)
                             {
-                                Task.WaitAll(_providers.Select(p => p.OnClientOpen(clientId, this)).ToArray());
+                                Task.WaitAll(_logicProviders.Select(p => p.OnClientOpen(clientId, this)).ToArray());
                             }
                             /// 启动网络监听
                             await Task.Run(() => ProcessWebSocketRequest(connection));
@@ -69,6 +63,7 @@ namespace WebSocketServer.ServerKernal
                 }
                 else
                 {
+                    DebugLog.Print($"WebSocketClientData service is null or this is not webscoket request ");
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 }
             }
@@ -108,9 +103,9 @@ namespace WebSocketServer.ServerKernal
                             if (await _wsData.RemoveConnection(connection))
                             {
                                 DebugLog.Print($"WebSocket connection closed for client with ID: {connection.clientId}");
-                                if (_providers != null)
+                                if (_logicProviders != null)
                                 {
-                                    foreach (var provider in _providers)
+                                    foreach (var provider in _logicProviders)
                                     {
                                         provider?.OnClientClose(connection.clientId);
                                     }
@@ -124,14 +119,13 @@ namespace WebSocketServer.ServerKernal
                     // Process the received message
                     string receivedMessage = Encoding.UTF8.GetString(messageBytes.ToArray());
 
-                    if (!string.IsNullOrEmpty(receivedMessage) && _providers != null)
+                    if (!string.IsNullOrEmpty(receivedMessage) && _logicProviders != null)
                     {
-                        foreach (var provider in _providers)
+                        foreach (var provider in _logicProviders)
                         {
                             provider?.OnMessageRecieved(receivedMessage);
                         }
-                       
-                        DebugLog.Print($"Received message from client {connection.clientId}: {receivedMessage}");
+                        //DebugLog.Print($"Received message from client {connection.clientId}: {receivedMessage}");
                     }                   
                 }
                 catch (WebSocketException ex)

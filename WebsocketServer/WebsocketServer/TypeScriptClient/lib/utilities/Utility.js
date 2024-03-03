@@ -65,4 +65,3 @@ var WebsocketTSClient;
         DateTimeKind[DateTimeKind["Utc"] = 1] = "Utc";
     })(DateTimeKind = WebsocketTSClient.DateTimeKind || (WebsocketTSClient.DateTimeKind = {}));
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=Utility.js.map

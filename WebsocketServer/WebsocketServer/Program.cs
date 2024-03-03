@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using System.Net;
 using System.Net.WebSockets;
+using WebSocketServer.DataService;
 using WebSocketServer.ServerKernal;
 using WebSocketServer.ServiceLogic;
 using WebSocketServer.Utilities;
@@ -13,7 +14,20 @@ public class Program
     {
 
         var builder = WebApplication.CreateBuilder(args);
+
+        // 每个请求创建一个 middleware
         builder.Services.AddTransient<WebSocketMiddleWare>();
+
+        // connection 连接数据
+        builder.Services.AddSingleton<WebSocketClientData>();
+        // master slaves group 数据
+        builder.Services.AddSingleton<MasterSlavesGroupData>();
+        // 分组广播服务
+        builder.Services.AddSingleton<IWebSocketLogic, ClientGroupBroadcastService>();
+        // master slaves group 消息广播服务
+        builder.Services.AddSingleton<IWebSocketLogic, MasterSlavesGroupService>();
+        // connection 监控服务
+        builder.Services.AddSingleton<IWebSocketLogic, ConnMonitorService>();
 
         builder.WebHost.ConfigureKestrel((context, serverOptions) =>
         {
@@ -23,9 +37,9 @@ public class Program
             //    listenOptions.UseHttps("testCert.pfx", "testPassword");
             //});
         });
-
         var app = builder.Build();
-      
+        
+
         var webSocketOptions = new WebSocketOptions
         {
             KeepAliveInterval = TimeSpan.FromMinutes(2)            
@@ -36,12 +50,12 @@ public class Program
         app.UseWebSocketMiddleware();
 
         var provider = new FileExtensionContentTypeProvider();
-        provider.Mappings[".data"] = "application/octet-stream";
-        provider.Mappings[".data.gz"] = "application/octet-stream";
-        provider.Mappings[".wasm"] = "application/wasm";
-        provider.Mappings[".wasm.gz"] = "application/wasm";
-        provider.Mappings[".js.gz"] = "application/octet-stream";
-        provider.Mappings[".symbols.json.gz"] = "application/octet-stream";
+        //provider.Mappings[".data"] = "application/octet-stream";
+        //provider.Mappings[".data.gz"] = "application/octet-stream";
+        //provider.Mappings[".wasm"] = "application/wasm";
+        //provider.Mappings[".wasm.gz"] = "application/wasm";
+        //provider.Mappings[".js.gz"] = "application/octet-stream";
+        //provider.Mappings[".symbols.json.gz"] = "application/octet-stream";
 
         app.UseStaticFiles(new StaticFileOptions
         {            

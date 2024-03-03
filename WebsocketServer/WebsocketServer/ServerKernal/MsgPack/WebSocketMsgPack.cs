@@ -11,7 +11,7 @@ namespace WebSocketServer.ServerKernal.MsgPack
     /// <summary>
     /// 基础数据包
     /// </summary>
-    internal abstract class MsgPack
+    public abstract class MsgPack
     {
         public required string clientId;
         public abstract string type { get; }
@@ -73,9 +73,14 @@ namespace WebSocketServer.ServerKernal.MsgPack
 
             return obj;
         }
+
+        public override string ToString()
+        {
+            return ToJson().ToString(Newtonsoft.Json.Formatting.None);
+        }
     }
 
-    internal class RequestPack : MsgPack
+    public class RequestPack : MsgPack
     {
         public int rid { get; private set; }
 
@@ -99,7 +104,7 @@ namespace WebSocketServer.ServerKernal.MsgPack
         }
     }
 
-    internal class ResponsePack : MsgPack
+    public class ResponsePack : MsgPack
     {
         public override string type => "response";
         public int? rid; // request id;
@@ -139,7 +144,7 @@ namespace WebSocketServer.ServerKernal.MsgPack
         }
     }
 
-    internal class NotifyPack : MsgPack
+    public class NotifyPack : MsgPack
     {
         public override string type => "notify";
         public static NotifyPack? Parse(JObject rawData)

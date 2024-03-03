@@ -41,24 +41,39 @@ var WebsocketTSClient;
      */
     var WSBackend = /** @class */ (function () {
         function WSBackend(_backendUrl) {
+            var _this = this;
             this._backendUrl = _backendUrl;
             this._isInited = false;
-            /**
-              * ws 连接状态变化
-              */
-            this.OnStateChanged = [];
-            /**
-             * ws 收到 Response
-             */
-            this.OnResponse = [];
-            /**
-            * ws 收到 Notify
-            */
-            this.OnNotify = [];
+            /** ws 连接状态变化 */
+            this.OnStateChanged = new WebsocketTSClient.EventHandler();
+            /** ws 收到 Response */
+            this.OnResponse = new WebsocketTSClient.EventHandler();
+            /** ws 收到 Notify */
+            this.OnNotify = new WebsocketTSClient.EventHandler();
+            this.OnWSClientStateChanged = function (state) {
+                _this.OnStateChanged.Trigger(state);
+            };
+            this.OnWSClientMsgRecieved = function (msg) {
+                var jobj = JSON.parse(msg);
+                if (jobj != null) {
+                    if (jobj.type == "response") {
+                        if (_this.OnResponse != null) {
+                            // 收到response
+                            _this.OnResponse.Trigger(jobj);
+                        }
+                    }
+                    else if (jobj.type == "notify") {
+                        if (_this.OnNotify != null) {
+                            // 收到notify
+                            _this.OnNotify.Trigger(jobj);
+                        }
+                    }
+                }
+            };
             this._uid = WebsocketTSClient.Utility.GenerateUniqueId();
             this._wsClient = new WebsocketTSClient.WebSocketClient(this._backendUrl, this._uid);
-            this._wsClient.AddStateChangedHandler(this.OnWSClientStateChanged);
-            this._wsClient.AddMessageReceivedHandler(this.OnWSClientMsgRecieved);
+            this._wsClient.OnStateChanged.AddListener(this.OnWSClientStateChanged);
+            this._wsClient.OnMessageReceived.AddListener(this.OnWSClientMsgRecieved);
         }
         WSBackend.CreateSingleton = function (backendUrl) {
             if (!WSBackend.singleton) {
@@ -84,12 +99,12 @@ var WebsocketTSClient;
                             var handler = function (state) {
                                 if (state) {
                                     WebsocketTSClient.Utility.LogDebug("[WSBackend]", "Connect2Server Promise resolved");
-                                    _this._wsClient.RmStateChangedHandler(handler);
+                                    _this._wsClient.OnStateChanged.RmListener(handler);
                                     resolve();
                                 }
                                 // reject 不会使用，因为client会自动断线重连
                             };
-                            _this._wsClient.AddStateChangedHandler(handler);
+                            _this._wsClient.OnStateChanged.AddListener(handler);
                         });
                         this._isInited = true;
                         return [2 /*return*/, promise]; // Return the promise to be awaited
@@ -101,28 +116,6 @@ var WebsocketTSClient;
                     return [2 /*return*/];
                 });
             });
-        };
-        WSBackend.prototype.OnWSClientStateChanged = function (state) {
-            if (this.OnStateChanged != null) {
-                this.OnStateChanged.forEach(function (handler) { handler(state); });
-            }
-        };
-        WSBackend.prototype.OnWSClientMsgRecieved = function (msg) {
-            var jobj = JSON.parse(msg);
-            if (jobj != null) {
-                if (jobj.type == "response") {
-                    if (this.OnResponse != null) {
-                        // 收到response
-                        this.OnResponse.forEach(function (handler) { handler(jobj); });
-                    }
-                }
-                else if (jobj.type == "notify") {
-                    if (this.OnNotify != null) {
-                        // 收到notify
-                        this.OnNotify.forEach(function (handler) { handler(jobj); });
-                    }
-                }
-            }
         };
         /**
          * 创建一个请求
@@ -139,56 +132,10 @@ var WebsocketTSClient;
             pack.serviceName = serviceName;
             pack.cmd = cmd;
             pack.data = data;
-            this._wsClient.SendMsg(JSON.stringify(pack));
+            this._wsClient.SendMsg(JSON.stringify(pack).replace(/[\r\n\s]/g, ""));
             return pack.rid;
-        };
-        /**
-         * ws 连接状态变化，添加事件
-         */
-        WSBackend.prototype.AddStateChangedHandler = function (handler) {
-            this.OnStateChanged.push(handler);
-        };
-        /**
-         * ws 连接状态变化，移除事件
-         */
-        WSBackend.prototype.RmStateChangedHandler = function (handler) {
-            var index = this.OnStateChanged.indexOf(handler);
-            if (index !== -1) {
-                this.OnStateChanged.splice(index, 1);
-            }
-        };
-        /**
-         * add recieved Response event
-         */
-        WSBackend.prototype.AddResponseHandler = function (handler) {
-            this.OnResponse.push(handler);
-        };
-        /**
-         * remove recieved Response event
-         */
-        WSBackend.prototype.RmResponseHandler = function (handler) {
-            var index = this.OnResponse.indexOf(handler);
-            if (index !== -1) {
-                this.OnResponse.splice(index, 1);
-            }
-        };
-        /**
-         * add recieved Notify event
-         */
-        WSBackend.prototype.AddNotifyHandler = function (handler) {
-            this.OnNotify.push(handler);
-        };
-        /**
-         * remove recieved Notify event
-         */
-        WSBackend.prototype.RmNotifyHandler = function (handler) {
-            var index = this.OnResponse.indexOf(handler);
-            if (index !== -1) {
-                this.OnNotify.splice(index, 1);
-            }
         };
         return WSBackend;
     }());
     WebsocketTSClient.WSBackend = WSBackend;
 })(WebsocketTSClient || (WebsocketTSClient = {}));
-//# sourceMappingURL=WSBackend.js.map

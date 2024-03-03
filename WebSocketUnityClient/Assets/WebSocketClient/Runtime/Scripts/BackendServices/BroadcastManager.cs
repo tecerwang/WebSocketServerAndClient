@@ -79,6 +79,13 @@ namespace WebSocketClient
             await Task.CompletedTask;
         }
 
+        public override async Task Release()
+        {
+            WSBackend.singleton.OnBackendNotify -= Singleton_OnBackendNotify;
+            WSBackend.singleton.OnBackendStateChanged -= Singleton_OnBackendStateChanged;
+            await Task.CompletedTask;
+        }
+
         private void Singleton_OnBackendNotify(string serviceName, string cmd, JToken data)
         {
             if (serviceName == BroadcastManager.serviceName)
