@@ -111,15 +111,15 @@ namespace WebSocketClient
         /// 注册本机作为 master
         /// </summary>
         /// <param name="masterName"></param>
-        public void RegisterAsMaster(string masterName, JToken data)
+        public void RegisterAsMaster(string masterName, JToken masterData)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 clientState = ClientState.IsMaster;
-                JObject jobj = new JObject();
-                jobj.Add("masterName", masterName);
-                jobj.Add("masterData", data);
+                JObject data = new JObject();
+                data.Add("masterName", masterName);
+                data.Add("masterData", masterData);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster Begin");
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_RegisterAsMaster, jobj, null, OnRegisterMasterResponse);
             }
