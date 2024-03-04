@@ -111,7 +111,7 @@ namespace WebSocketClient
         /// 注册本机作为 master
         /// </summary>
         /// <param name="masterName"></param>
-        public void RegisterAsMaster(string masterName, JObject data)
+        public void RegisterAsMaster(string masterName, JToken data)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
