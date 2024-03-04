@@ -121,7 +121,7 @@ namespace WebSocketClient
                 data.Add("masterName", masterName);
                 data.Add("masterData", masterData);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster Begin");
-                BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_RegisterAsMaster, jobj, null, OnRegisterMasterResponse);
+                BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_RegisterAsMaster, data, null, OnRegisterMasterResponse);
             }
         }
 
