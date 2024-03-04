@@ -1,6 +1,6 @@
 ﻿namespace WebsocketTSClient
 {
-    var utility = WebsocketTSClient.Utility;
+    var Utility = WebsocketTSClient.Utility;
     var service: MasterSlavesGroupService = null;
     var wsBackend: WSBackend = null;
     async function init()
@@ -9,21 +9,23 @@
         const backendUrl = 'ws://localhost:8080/ws';
 
         // 创建一个 backend 的单例
-        utility.LogDebug("[HTML]", "Create singleton backend start");
+        Utility.LogDebug("[HTML]", "Create singleton backend start");
         if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl))
         {
-            utility.LogDebug("[HTML]", "Create singleton backend end");
+            Utility.LogDebug("[HTML]", "Create singleton backend end");
 
             wsBackend = WSBackend.singleton;
             // await/async 异步等待服务器连接完成
-            utility.LogDebug("[HTML]", "Connect to server start");
+            Utility.LogDebug("[HTML]", "Connect to server start");
             await wsBackend.Connect2Server();
-            utility.LogDebug("[HTML]", "Connect to server end");
-
+            Utility.LogDebug("[HTML]", "Connect to server end");
+            
             // 创建一个 service 用于管理 MasterSlavesGroupService 通信服务
             service = new WebsocketTSClient.MasterSlavesGroupService();
-
+            service.RegisterAsListener();
+            
             // Callback 后改变 UI
+            wsBackend.OnStateChanged.AddListener((state) => { if (!state) resetUiElements() }); // 掉线后改变 UI
             service.OnRegisteredAsMaster.AddListener((errCode) => { if (errCode === ErrCode.OK) resetUiElements(); });
             service.OnUnregisteredFromMaster.AddListener((errCode) => { if (errCode === ErrCode.OK) resetUiElements(); });
             service.OnRegisteredAsSlave.AddListener((errCode) => { if (errCode === ErrCode.OK) resetUiElements(); });
@@ -81,7 +83,7 @@
         }
         else
         {
-            utility.LogDebug("[HTML]", "singleton backend already created");
+            Utility.LogDebug("[HTML]", "singleton backend already created");
         }
     }
 

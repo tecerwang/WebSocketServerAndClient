@@ -115,7 +115,6 @@ namespace WebSocketClient
                 if (isSuccessful)
                 {
                     Utility.LogDebug("Backend", "connect to ws server end");
-                    State = WSBackendState.Open;
                     completeSource.SetResult(true);
                     WsClientProxy_OnClientStateChanged();
                 }

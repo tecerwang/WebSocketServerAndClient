@@ -16,6 +16,14 @@ var WebsocketTSClient;
         */
         BackendOps.Cmd_BroadcastMsg = "BroadcastMsg";
         /**
+          * 注册一个 Master
+          */
+        BackendOps.Cmd_RegisterAsListener = "RegisterAsListener";
+        /**
+        * 注销一个 Master
+        */
+        BackendOps.Cmd_UnregisterFromListener = "UnregisterFromListener";
+        /**
         * 注册一个 Master
         */
         BackendOps.Cmd_RegisterAsMaster = "RegisterAsMaster";

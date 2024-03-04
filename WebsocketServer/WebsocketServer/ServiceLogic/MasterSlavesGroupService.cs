@@ -6,6 +6,7 @@ using WebSocketServer.DataService;
 using WebSocketServer.ServerKernal;
 using WebSocketServer.ServerKernal.MsgPack;
 using WebSocketServer.Utilities;
+using static WebSocketServer.ServiceLogic.ClientGroupBroadcastService;
 
 namespace WebSocketServer.ServiceLogic
 {
@@ -63,7 +64,7 @@ namespace WebSocketServer.ServiceLogic
             var master = await _dataProvider.GetMasterByClientId(clientId);
             if (master != null)
             {
-                await SendSlavesThatMasterCollectionChanged(_dataProvider);
+                await Send_MasterChanged_2_Listenrs(_dataProvider, master, false);
                 await _dataProvider.UnregisterMaster(master);
             }
 
@@ -85,8 +86,17 @@ namespace WebSocketServer.ServiceLogic
             {
                 return;
             }
-
-            // master 注册一个菜单提供者
+            // 注册 listener，listener 接收特定的 Notify
+            if (pack.cmd == BackendOps.Cmd_RegisterAsListener)
+            {
+                await HandleRegisterAsListener(_dataProvider, pack);
+            }
+            // 注销 listener
+            else if (pack.cmd == BackendOps.Cmd_UnregisterFromListener)
+            {
+                await HandleUnegisterFromListener(_dataProvider, pack);
+            }
+            // 注册 master
             if (pack.cmd == BackendOps.Cmd_RegisterAsMaster)
             {
                 await HandleRegisterAsMaster(_dataProvider, pack);
@@ -96,17 +106,17 @@ namespace WebSocketServer.ServiceLogic
             {
                 await HandleUnregisterFromMaster(_dataProvider, pack);
             }
-            // 获取所有master
+            // 获取所有 master
             else if (pack.cmd == BackendOps.Cmd_GetAllMasters)
             {
                 await HandleGetAllMasters(_dataProvider, pack);
             }
-            // 注册slave
+            // 注册 slave
             else if (pack.cmd == BackendOps.Cmd_RegisterAsSlave)
             {
                 await HandleRegisterAsSlave(_dataProvider, pack);
             }
-            // 注销slave
+            // 注销 slave
             else if (pack.cmd == BackendOps.Cmd_UnregisterFromSlave)
             {
                await HandleUnregisterFromSlave(_dataProvider, pack);
@@ -116,6 +126,44 @@ namespace WebSocketServer.ServiceLogic
             {
                 await HandleBroadcast(_dataProvider, pack);
             }           
+        }
+
+        private async Task HandleRegisterAsListener(MasterSlavesGroupData dataProvider, RequestPack pack)
+        {
+            var clientId = pack.clientId;
+            if (string.IsNullOrEmpty(clientId))
+            {
+                await CreateResponseToClient(pack, null, ErrCode.Unkown);
+                return;
+            }
+
+            if (await dataProvider.RegisterListener(clientId))
+            {
+                await CreateResponseToClient(pack, null, ErrCode.OK);
+            }
+            else 
+            {
+                await CreateResponseToClient(pack, null, ErrCode.Unkown);
+            }
+        }
+
+        private async Task HandleUnegisterFromListener(MasterSlavesGroupData dataProvider, RequestPack pack)
+        {
+            var clientId = pack.clientId;
+            if (string.IsNullOrEmpty(clientId))
+            {
+                await CreateResponseToClient(pack, null, ErrCode.Unkown);
+                return;
+            }
+
+            if (await dataProvider.UnregisterListener(clientId))
+            {
+                await CreateResponseToClient(pack, null, ErrCode.OK);
+            }
+            else
+            {
+                await CreateResponseToClient(pack, null, ErrCode.Unkown);
+            }
         }
 
         private async Task HandleRegisterAsMaster(MasterSlavesGroupData dataProvider, RequestPack pack)
@@ -133,7 +181,7 @@ namespace WebSocketServer.ServiceLogic
                 return;
             }
             var master = await dataProvider.GetMasterByClientId(clientId);
-            var masterData = JHelper.GetJsonObject(pack.data, "masterData");
+            var masterData = JHelper.GetJsonToken(pack.data, "masterData");
             if (master != null)
             {
                 master.masterName = masterName;
@@ -145,7 +193,7 @@ namespace WebSocketServer.ServiceLogic
                 await dataProvider.RegisterMaster(master);
                 DebugLog.Print("MasterSlavesGroupService", "RegisterMaster", master.clientId);
             }
-            await SendSlavesThatMasterCollectionChanged(dataProvider);
+            await Send_MasterChanged_2_Listenrs(dataProvider, master, true);
             await CreateResponseToClient(pack, null, ErrCode.OK);
         }
 
@@ -156,7 +204,7 @@ namespace WebSocketServer.ServiceLogic
             await dataProvider.UnregisterMaster(master);
             if (master != null)
             {
-                await SendSlavesThatMasterCollectionChanged(dataProvider);
+                await Send_MasterChanged_2_Listenrs(dataProvider, master, false);
                 await CreateResponseToClient(pack, null, ErrCode.OK);
                 DebugLog.Print("MasterSlavesGroupService", "UnregisterMaster", master.clientId);
             }
@@ -172,16 +220,16 @@ namespace WebSocketServer.ServiceLogic
             var masters = await dataProvider.GetAllMasters();
            
             JArray jarr = new JArray();
-            for (int i = 0; i < masters.Length; i++)
+            foreach (var master in masters)
             {
                 var jitem = new JObject();
-                jitem.Add("clientId", masters[i].clientId);
-                jitem.Add("masterName", masters[i].masterName);
+                jitem.Add("clientId", master.clientId);
+                jitem.Add("masterName", master.masterName);
                 jarr.Add(jitem);
             }
             JObject jobj = JHelper.MakeData("masters", jarr);
             await CreateResponseToClient(pack, jobj, ErrCode.OK);
-            DebugLog.Print("MasterSlavesGroupService", "HandleGetAllMasters", $"Master count : {masters.Length}");
+            DebugLog.Print("MasterSlavesGroupService", "HandleGetAllMasters", $"Master count : {masters.Count()}");
         }
 
         private async Task HandleRegisterAsSlave(MasterSlavesGroupData dataProvider, RequestPack pack)
@@ -216,7 +264,7 @@ namespace WebSocketServer.ServiceLogic
 
             slaveClient = new SlaveClient() { clientId = clientId, masterId = masterId };
             await dataProvider.RegisterSlave(slaveClient);
-            await CreateResponseToClient(pack, null, ErrCode.OK);
+            await CreateResponseToClient(pack, masterClient.masterData, ErrCode.OK);
             DebugLog.Print("MasterSlavesGroupService", "HandleRegisterAsSlave", clientId);
         }
 
@@ -293,19 +341,19 @@ namespace WebSocketServer.ServiceLogic
         }
 
         /// <summary>
-        /// 需要向所有 salves 发送消息，告诉 Master 下线
+        /// 需要向所有 listener 发送消息，告诉 Master 下线
         /// </summary>
         /// <param name="dataProvider"></param>
         /// <param name="master"></param>
         /// <returns></returns>
-        private async Task SendSlavesThatMasterCollectionChanged(MasterSlavesGroupData dataProvider)
+        private async Task Send_MasterChanged_2_Listenrs(MasterSlavesGroupData dataProvider, MasterClient master, bool IsOnline)
         {
-            /// 需要向所有 salves 发送消息，告诉 Master 发生变化
-            foreach (var slaveClient in (await dataProvider.GetAllSlaves()))
+            JToken data = JHelper.MakeData("masterId", master.clientId, "Online", IsOnline);
+            foreach (var clientId in (await dataProvider.GetAllListeners()))
             {
-                await CreateNotifyToClient(slaveClient.clientId, serviceName, BackendOps.Notify_OnMasterCollectionChanged, null);
+                await CreateNotifyToClient(clientId, serviceName, BackendOps.Notify_OnMasterCollectionChanged, data);
             }
-            DebugLog.Print("MasterSlavesGroupService", "Master Collection Changed");
+            DebugLog.Print("MasterSlavesGroupService", master.clientId, IsOnline ? "Online" : "Offline");
         }
     }
 }

@@ -12,7 +12,11 @@
         /** 服务名称 */
         private static serviceName: string = "MasterSlavesGroupService";
         /** 是否在请求中 */
-        private isQuarying: boolean = false;       
+        private isQuarying: boolean = false;   
+        /** 注册为 Listerner */
+        public OnRegisteredAsListener: EventHandler<[number]> = new EventHandler<[number]>();
+        /** 注销 Listerner */
+        public OnUnregisteredFromListener: EventHandler<[number]> = new EventHandler<[number]>();
         /** 注册为 master */
         public OnRegisteredAsMaster: EventHandler<[number]> = new EventHandler<[number]>();
         /** 注销 master */
@@ -22,7 +26,7 @@
         /** 注销 slave */
         public OnUnregisteredFromSlave: EventHandler<[number]> = new EventHandler<[number]>();
         /** 当服务器 master 集合发生变化 */
-        public OnMasterCollectionChanged: EventHandler<[]> = new EventHandler<[]>();
+        public OnMasterCollectionChanged: EventHandler<[string, number]> = new EventHandler<[string, number]>();
         /** 获取所有 master */
         public OnGetAllMasters: EventHandler<[number, any]> = new EventHandler<[number, any]>();
         /** 广播消息 */
@@ -59,13 +63,59 @@
                 // 收到服务器 master 集合变化的消息
                 if (not.cmd == BackendOps.Notify_OnMasterCollectionChanged)
                 {
-                    this.OnMasterCollectionChanged.Trigger();
+                   
+                    var masterId = not.data["masterId"];
+                    var isOnline = not.data["Online"]; 
+                    Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterId, isOnline);
+                    this.OnMasterCollectionChanged.Trigger(masterId, isOnline);
                 }
                 // 收到广播消息
                 if (not.cmd == BackendOps.Cmd_Broadcast)
                 {
                     this.OnRecievedBroadcast.Trigger(not.data);
                 }
+            }
+        }
+
+        public RegisterAsListener(): void
+        {
+            if (!this.isQuarying && WSBackend.singleton.IsConnected)
+            {
+                this.isQuarying = true;
+                BackendRequest.CreateRetry(
+                    MasterSlavesGroupService.serviceName,
+                    BackendOps.Cmd_RegisterAsListener,
+                    null,
+                    null,
+                    // resp
+                    (errCode: number, data: any, context: any) =>
+                    {
+                        this.isQuarying = false;
+                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                        this.OnRegisteredAsListener.Trigger(errCode);
+                    }
+                );
+            }
+        }
+
+        public UnregisterFromListener(): void
+        {
+            if (!this.isQuarying && WSBackend.singleton.IsConnected)
+            {
+                this.isQuarying = true;
+                BackendRequest.CreateRetry(
+                    MasterSlavesGroupService.serviceName,
+                    BackendOps.Cmd_UnregisterFromListener,
+                    null,
+                    null,
+                    // resp
+                    (errCode: number, data: any, context: any) =>
+                    {
+                        this.isQuarying = false;
+                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                        this.OnUnregisteredFromListener.Trigger(errCode);
+                    }
+                );
             }
         }
 

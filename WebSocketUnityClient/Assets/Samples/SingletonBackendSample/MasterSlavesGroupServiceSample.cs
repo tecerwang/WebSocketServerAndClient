@@ -6,6 +6,8 @@ using UIFramework;
 using UnityEngine;
 using UnityEngine.UI;
 using WebSocketClient;
+using WebSocketClient.Utilities.Data;
+using static WebSocketClient.MasterSlavesGroupService;
 
 public class MasterSlavesGroupServiceSample : MonoBehaviour
 {
@@ -22,6 +24,8 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
     // Start is called before the first frame update
     async void Start()
     {
+        Utility.logLevel = Utility.LogLevel.Internal;
+
         await BackendManager.WaitForInitAsync();
 
         ResetUIState();
@@ -61,17 +65,74 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         BackendManager.singleton.msGroupManager.OnRecievedBroadcast -= MsGroupManager_OnRecievedBroadcast;
     }
 
+    /// <summary>
+    /// 创建一个菜单树
+    /// </summary>
+    /// <returns></returns>
+    private TreeItem<MenuItem>.Collection CreateMasterMenuData()
+    {
+        var collection = new TreeItem<MenuItem>.Collection();
+
+        // 第一种方式设置菜单结构
+        collection.StartFromRoot()
+            // 设置同级菜单
+            .Next(new MenuItem("菜单_1"))
+                // 设置子菜单
+                .Children((children) =>
+                {
+                    children.Next(new MenuItem("菜单_1_1"))
+                            .Next(new MenuItem("菜单_1_2"))
+                            .Next(new MenuItem("菜单_1_3"))
+                                .Children(children =>
+                                {
+                                    children.Next(new MenuItem("菜单_1_3_1"))
+                                            .Next(new MenuItem("菜单_1_3_2"))
+                                            .Next(new MenuItem("菜单_1_3_3"));
+                                })
+                            .Next(new MenuItem("菜单_1_4"));
+
+                })
+            .Next(new MenuItem("菜单_2"))
+            .Next(new MenuItem("菜单_3"))
+                .Children((children) =>
+                {
+                    children.Next(new MenuItem("菜单_3_1"))
+                                .Children(children =>
+                                {
+                                    children.Next(new MenuItem("菜单_3_1_1"))
+                                            .Next(new MenuItem("菜单_3_1_2"));
+                                })
+                            .Next(new MenuItem("菜单_3_2"));
+
+                });
+
+        // 第二种方式设置菜单结构，注意 CreateItem(menu,parent) 第二个参数时当前设置menu的父级
+        var menu4 = collection.CreateRootItem(new MenuItem("菜单_4"));
+        var menu4_1 = collection.CreateItem(new MenuItem("菜单_4_1"), menu4);
+        var menu4_2 = collection.CreateItem(new MenuItem("菜单_4_2"), menu4);
+        var menu4_3 = collection.CreateItem(new MenuItem("菜单_4_3"), menu4);
+        return collection;
+    }
+
     private void Singleton_OnBackendStateChanged()
     {
+        if (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
+        {
+            BackendManager.singleton.msGroupManager.RegisterAsListener();
+        }
         ResetUIState();
     }
 
     private void Click_RegisterAsMaster()
     {
+        // 创建一个菜单树
+        var collection = CreateMasterMenuData();
+        Utility.LogDebug("MasterSlavesGroupServiceSample", "CreateMasterData", collection.ToJson());
+
         string masterName = inputMasterName.text;
         if (!string.IsNullOrEmpty(masterName))
         {
-            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName, null);
+            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName, collection.ToJson());
             ResetUIState();
         }
     }
@@ -129,7 +190,6 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         }
     }
 
-    
     private void MsGroupManager_OnBroadcast(int errCode)
     {
 
@@ -145,9 +205,9 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
 
     }
 
-    private void MsGroupManager_OnMasterCollectionChanged()
+    private void MsGroupManager_OnMasterCollectionChanged(string masterId, bool isOnline)
     {
-
+        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnMasterCollectionChanged", masterId, isOnline);
     }
 
     private void MsGroupManager_OnRecievedBroadcast(Newtonsoft.Json.Linq.JToken data)

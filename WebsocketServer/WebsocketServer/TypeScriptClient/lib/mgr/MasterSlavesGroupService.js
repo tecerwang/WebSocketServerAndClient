@@ -11,6 +11,10 @@ var WebsocketTSClient;
             var _this = this;
             /** 是否在请求中 */
             this.isQuarying = false;
+            /** 注册为 Listerner */
+            this.OnRegisteredAsListener = new WebsocketTSClient.EventHandler();
+            /** 注销 Listerner */
+            this.OnUnregisteredFromListener = new WebsocketTSClient.EventHandler();
             /** 注册为 master */
             this.OnRegisteredAsMaster = new WebsocketTSClient.EventHandler();
             /** 注销 master */
@@ -38,7 +42,10 @@ var WebsocketTSClient;
                 if (not.serviceName == MasterSlavesGroupService.serviceName) {
                     // 收到服务器 master 集合变化的消息
                     if (not.cmd == WebsocketTSClient.BackendOps.Notify_OnMasterCollectionChanged) {
-                        _this.OnMasterCollectionChanged.Trigger();
+                        var masterId = not.data["masterId"];
+                        var isOnline = not.data["Online"];
+                        WebsocketTSClient.Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterId, isOnline);
+                        _this.OnMasterCollectionChanged.Trigger(masterId, isOnline);
                     }
                     // 收到广播消息
                     if (not.cmd == WebsocketTSClient.BackendOps.Cmd_Broadcast) {
@@ -51,6 +58,32 @@ var WebsocketTSClient;
         }
         MasterSlavesGroupService.prototype.GetState = function () {
             return this.state;
+        };
+        MasterSlavesGroupService.prototype.RegisterAsListener = function () {
+            var _this = this;
+            if (!this.isQuarying && WebsocketTSClient.WSBackend.singleton.IsConnected) {
+                this.isQuarying = true;
+                WebsocketTSClient.BackendRequest.CreateRetry(MasterSlavesGroupService.serviceName, WebsocketTSClient.BackendOps.Cmd_RegisterAsListener, null, null, 
+                // resp
+                function (errCode, data, context) {
+                    _this.isQuarying = false;
+                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                    _this.OnRegisteredAsListener.Trigger(errCode);
+                });
+            }
+        };
+        MasterSlavesGroupService.prototype.UnregisterFromListener = function () {
+            var _this = this;
+            if (!this.isQuarying && WebsocketTSClient.WSBackend.singleton.IsConnected) {
+                this.isQuarying = true;
+                WebsocketTSClient.BackendRequest.CreateRetry(MasterSlavesGroupService.serviceName, WebsocketTSClient.BackendOps.Cmd_UnregisterFromListener, null, null, 
+                // resp
+                function (errCode, data, context) {
+                    _this.isQuarying = false;
+                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                    _this.OnUnregisteredFromListener.Trigger(errCode);
+                });
+            }
         };
         MasterSlavesGroupService.prototype.RegisterAsMaster = function (masterName, masterData) {
             var _this = this;

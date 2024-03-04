@@ -18,6 +18,16 @@
         public static Cmd_BroadcastMsg: string = "BroadcastMsg";
 
         /**
+          * 注册一个 Master
+          */
+        public static Cmd_RegisterAsListener: string = "RegisterAsListener";
+
+        /**
+        * 注销一个 Master
+        */
+        public static Cmd_UnregisterFromListener: string = "UnregisterFromListener";
+
+        /**
         * 注册一个 Master
         */
         public static Cmd_RegisterAsMaster: string = "RegisterAsMaster";

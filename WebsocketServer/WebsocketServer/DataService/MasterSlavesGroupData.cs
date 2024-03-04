@@ -1,23 +1,54 @@
 ﻿using Newtonsoft.Json.Linq;
 using WebSocketServer.Utilities;
+using WebSocketServer.DataService.Utiities;
+
 using static WebSocketServer.ServiceLogic.MasterSlavesGroupService;
 
 namespace WebSocketServer.DataService
 {
     internal class MasterSlavesGroupData
     {
+        // todo 修改一下数据结构
+        //private TreeItem<IClient>.Collection collection = new TreeItem<IClient>.Collection();
+
+        private HashSet<string> registeredListeners = new HashSet<string>();
+
         private Dictionary<string, MasterClient> registeredMasters = new Dictionary<string, MasterClient>();
 
         private Dictionary<string, SlaveClient> registeredSlaves  = new Dictionary<string, SlaveClient>();
 
-        private Dictionary<string, List<SlaveClient>> masterId2Slaves = new Dictionary<string, List<SlaveClient>>();
+        internal async Task<bool> RegisterListener(string clientId)
+        {
+            if (registeredListeners.Contains(clientId))
+            {
+                return await Task.FromResult(false);
+            }
+            registeredListeners.Add(clientId);
+            return await Task.FromResult(true);
+        }
+
+        internal async Task<bool> UnregisterListener(string clientId)
+        {
+            if (!registeredListeners.Contains(clientId))
+            {
+                return await Task.FromResult(false);
+            }
+            registeredListeners.Remove(clientId);
+            return await Task.FromResult(true);
+        }
+
+        internal async Task<IEnumerable<string>> GetAllListeners()
+        {           
+            return await Task.FromResult(registeredListeners);
+        }
 
         /// <summary>
         /// 获取所有 master
         /// </summary>
         /// <returns></returns>
-        internal async Task<MasterClient[]> GetAllMasters()
-        { 
+        internal async Task<IEnumerable<MasterClient>> GetAllMasters()
+        {
+            //return (IEnumerable<MasterClient>)await Task.FromResult(collection.GetAllItems().Where(p => p?.GetType() == typeof(MasterClient)));
             return await Task.FromResult(registeredMasters.Values.ToArray());
         }
 

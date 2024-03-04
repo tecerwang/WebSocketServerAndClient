@@ -27,6 +27,14 @@ namespace WebSocketServer.Utilities
 
         #region CentralControllerService
         /// <summary>
+        /// 注册成为监听者，监听服务事件
+        /// </summary>
+        public static string Cmd_RegisterAsListener = "RegisterAsListener";
+        /// <summary>
+        /// 从监听者注销
+        /// </summary>
+        public static string Cmd_UnregisterFromListener = "UnregisterFromListener";
+        /// <summary>
         /// 注册一个 Master
         /// </summary>
         public static string Cmd_RegisterAsMaster = "RegisterAsMaster";
