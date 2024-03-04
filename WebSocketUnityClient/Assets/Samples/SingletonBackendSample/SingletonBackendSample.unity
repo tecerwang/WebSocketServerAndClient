@@ -3854,6 +3854,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SingletonBackendManager
       objectReference: {fileID: 0}
+    - target: {fileID: 2234438470051767152, guid: 0a3b8398c6e1ac041876b3210a15afe3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6339315336705524007, guid: 0a3b8398c6e1ac041876b3210a15afe3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

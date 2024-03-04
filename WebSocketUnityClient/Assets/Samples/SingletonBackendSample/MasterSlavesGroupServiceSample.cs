@@ -20,8 +20,10 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
     public InputField inputBroadcast;
 
     // Start is called before the first frame update
-    void Start()
+    async void Start()
     {
+        await BackendManager.WaitForInitAsync();
+
         ResetUIState();
 
         /// 一步一步测试

@@ -28,12 +28,28 @@ namespace WebSocketClient
 
         public string backendUrl = defaultBackendUrl;
 
+        private static TaskCompletionSource<bool> _waitForInitedAsyncTCS;
+
+        /// <summary>
+        /// 异步等待 backend manager 完成初始化
+        /// </summary>
+        /// <returns></returns>
+        public static async Task WaitForInitAsync()
+        { 
+            if(singleton != null &&  singleton.IsInited)
+            {
+                return;
+            }
+            _waitForInitedAsyncTCS = new TaskCompletionSource<bool>();
+            await _waitForInitedAsyncTCS.Task;
+        }
+
         private async void Awake()
         {
             singleton = this;
             DontDestroyOnLoad(gameObject);
 
-            if (WSBackend.CreateSingleton(this))
+            if (!IsInited && WSBackend.CreateSingleton(this))
             {
                 // 初始化一个 client proxy gameObject
                 WSBackend.singleton.Init(backendUrl);
@@ -46,6 +62,10 @@ namespace WebSocketClient
 
                 // managers 初始化完成
                 IsInited = true;
+
+                // 让 WaitForInitedAsync 结束等待
+                _waitForInitedAsyncTCS?.SetResult(true);
+
                 await WSBackend.singleton.Connect2ServerAsync();
             }
         }
