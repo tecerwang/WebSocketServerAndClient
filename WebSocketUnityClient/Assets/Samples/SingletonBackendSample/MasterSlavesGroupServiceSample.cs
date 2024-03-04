@@ -71,7 +71,7 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         string masterName = inputMasterName.text;
         if (!string.IsNullOrEmpty(masterName))
         {
-            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName);
+            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName, null);
             ResetUIState();
         }
     }
