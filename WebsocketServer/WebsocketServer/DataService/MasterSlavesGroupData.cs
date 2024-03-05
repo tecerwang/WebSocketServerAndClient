@@ -3,6 +3,7 @@ using WebSocketServer.Utilities;
 using WebSocketServer.DataService.Utiities;
 
 using static WebSocketServer.ServiceLogic.MasterSlavesGroupService;
+using System.Collections.Concurrent;
 
 namespace WebSocketServer.DataService
 {
@@ -13,28 +14,37 @@ namespace WebSocketServer.DataService
 
         private HashSet<string> registeredListeners = new HashSet<string>();
 
-        private Dictionary<string, MasterClient> registeredMasters = new Dictionary<string, MasterClient>();
+        private ConcurrentDictionary<string, MasterClient> registeredMasters = new ConcurrentDictionary<string, MasterClient>();
 
-        private Dictionary<string, SlaveClient> registeredSlaves  = new Dictionary<string, SlaveClient>();
+        private ConcurrentDictionary<string, SlaveClient> registeredSlaves  = new ConcurrentDictionary<string, SlaveClient>();
 
         internal async Task<bool> RegisterListener(string clientId)
         {
-            if (registeredListeners.Contains(clientId))
+            bool result;
+            lock (registeredListeners)
             {
-                return await Task.FromResult(false);
+                if (registeredListeners.Contains(clientId))
+                {
+                    result = false;
+                }
+                registeredListeners.Add(clientId);
+                result = true;
             }
-            registeredListeners.Add(clientId);
-            return await Task.FromResult(true);
+            return await Task.FromResult(result);
         }
 
         internal async Task<bool> UnregisterListener(string clientId)
         {
-            if (!registeredListeners.Contains(clientId))
+            bool result = false;
+            lock (registeredListeners)
             {
-                return await Task.FromResult(false);
+                if (registeredListeners.Contains(clientId))
+                {
+                    registeredListeners.Remove(clientId);
+                    result = true;
+                }
             }
-            registeredListeners.Remove(clientId);
-            return await Task.FromResult(true);
+            return await Task.FromResult(result);
         }
 
         internal async Task<IEnumerable<string>> GetAllListeners()
@@ -48,7 +58,6 @@ namespace WebSocketServer.DataService
         /// <returns></returns>
         internal async Task<IEnumerable<MasterClient>> GetAllMasters()
         {
-            //return (IEnumerable<MasterClient>)await Task.FromResult(collection.GetAllItems().Where(p => p?.GetType() == typeof(MasterClient)));
             return await Task.FromResult(registeredMasters.Values.ToArray());
         }
 
@@ -72,13 +81,13 @@ namespace WebSocketServer.DataService
         /// </summary>
         /// <param name="provider"></param>
         /// <returns></returns>
-        internal async Task RegisterMaster(MasterClient? master)
+        internal async Task<bool> RegisterMaster(MasterClient? master)
         {
             if (master != null && !string.IsNullOrEmpty(master.clientId))
             {
-                registeredMasters[master.clientId] = master;               
+                return await Task.FromResult(registeredMasters.TryAdd(master.clientId, master));
             }
-            await Task.CompletedTask;
+            return false;
         }
 
         /// <summary>
@@ -86,13 +95,14 @@ namespace WebSocketServer.DataService
         /// </summary>
         /// <param name="provider"></param>
         /// <returns></returns>
-        internal async Task UnregisterMaster(MasterClient? master)
+        internal async Task<MasterClient?> UnregisterMaster(string? clientId)
         {
-            if (master != null && !string.IsNullOrEmpty(master.clientId) && registeredMasters.ContainsKey(master.clientId))
+            if (!string.IsNullOrEmpty(clientId))
             {
-                registeredMasters.Remove(master.clientId);
+                await Task.FromResult(registeredMasters.TryRemove(clientId, out MasterClient? master));
+                return master;
             }
-            await Task.CompletedTask;            
+            return null;        
         }
 
         /// <summary>
@@ -121,14 +131,9 @@ namespace WebSocketServer.DataService
         {
             if (slave == null)
             {
-                return await Task.FromResult(false);
-            }
-            if(registeredSlaves.ContainsKey(slave.clientId))
-            {
-                return await Task.FromResult(false);
-            }
-            registeredSlaves.Add(slave.clientId, slave);
-            return await Task.FromResult(true);
+                return false;
+            }            
+            return await Task.FromResult(registeredSlaves.TryAdd(slave.clientId, slave));
         }
 
         /// <summary>
@@ -140,14 +145,9 @@ namespace WebSocketServer.DataService
         {
             if (slave == null)
             {
-                return await Task.FromResult(false);
+                return false;
             }
-            if (registeredSlaves.ContainsKey(slave.clientId))
-            {
-                registeredSlaves.Remove(slave.clientId);
-                return await Task.FromResult(true);
-            }
-            return await Task.FromResult(false);
+            return await Task.FromResult(registeredSlaves.TryRemove(slave.clientId, out _));
         }
 
         /// <summary>

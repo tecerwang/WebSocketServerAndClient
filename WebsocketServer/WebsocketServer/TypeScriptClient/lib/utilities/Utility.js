@@ -1,35 +1,41 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var WebsocketTSClient;
 (function (WebsocketTSClient) {
-    var IsDebugEnv = true;
-    var Utility = /** @class */ (function () {
-        function Utility() {
-        }
-        Utility.GetCurrentUTC = function () {
+    const IsDebugEnv = true;
+    class Utility {
+        static GetCurrentUTC() {
             return new Date();
-        };
-        Utility.UTCNowMilliseconds = function () {
+        }
+        static UTCNowMilliseconds() {
             return Date.now();
-        };
-        Utility.UTCNowSeconds = function () {
+        }
+        static UTCNowSeconds() {
             return Math.floor(Date.now() / 1000);
-        };
+        }
         /**
          * @param utcTimeString like: 03:40:20
          * @param dateTimeKind DateTimeKind.Local or DateTimeKind.Utc
          */
-        Utility.ParseUTCTimeString = function (utcTimeString, dateTimeKind) {
-            if (dateTimeKind === void 0) { dateTimeKind = DateTimeKind.Local; }
+        static ParseUTCTimeString(utcTimeString, dateTimeKind = DateTimeKind.Local) {
             if (!utcTimeString) {
                 return null;
             }
-            var segments = utcTimeString.split(':');
+            const segments = utcTimeString.split(':');
             if (!segments || segments.length !== 3) {
                 return null;
             }
-            var hourStr = segments[0], minsStr = segments[1], secsStr = segments[2];
-            var hour = parseInt(hourStr, 10);
-            var mins = parseInt(minsStr, 10);
-            var secs = parseInt(secsStr, 10);
+            const [hourStr, minsStr, secsStr] = segments;
+            const hour = parseInt(hourStr, 10);
+            const mins = parseInt(minsStr, 10);
+            const secs = parseInt(secsStr, 10);
             if (isNaN(hour) || isNaN(mins) || isNaN(secs) ||
                 hour < 0 || hour > 23 ||
                 mins < 0 || mins > 59 ||
@@ -38,28 +44,28 @@ var WebsocketTSClient;
             }
             // Date is meaningless, setting it to January 1, 2000
             return new Date(2000, 0, 1, hour, mins, secs);
-        };
-        Utility.LogDebug = function () {
-            var data = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                data[_i] = arguments[_i];
-            }
+        }
+        static LogDebug(...data) {
             if (IsDebugEnv) {
                 console.log(data);
             }
-        };
-        Utility.GenerateUniqueId = function () {
+        }
+        static GenerateUniqueId() {
             // Get browser information
-            var userAgent = "Browser";
-            var random = Math.random().toString(36).substring(2, 10);
-            var utc = Utility.UTCNowMilliseconds();
-            var uniqueId = "".concat(userAgent, "-").concat(random, "-").concat(utc);
+            const userAgent = "Browser";
+            const random = Math.random().toString(36).substring(2, 10);
+            const utc = Utility.UTCNowMilliseconds();
+            const uniqueId = `${userAgent}-${random}-${utc}`;
             return uniqueId;
-        };
-        return Utility;
-    }());
+        }
+        static delay(ms) {
+            return __awaiter(this, void 0, void 0, function* () {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            });
+        }
+    }
     WebsocketTSClient.Utility = Utility;
-    var DateTimeKind;
+    let DateTimeKind;
     (function (DateTimeKind) {
         DateTimeKind[DateTimeKind["Local"] = 0] = "Local";
         DateTimeKind[DateTimeKind["Utc"] = 1] = "Utc";

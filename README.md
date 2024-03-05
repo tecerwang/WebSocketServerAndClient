@@ -15,3 +15,6 @@ https://github.com/tecerwang/WebSocketServerAndClient.git?path=WebSocketUnityCli
 
 #### Samples
 https://github.com/tecerwang/WebSocketServerAndClient.git
+
+#### Upates
+使用ConcurrentDictionary解决并发问题

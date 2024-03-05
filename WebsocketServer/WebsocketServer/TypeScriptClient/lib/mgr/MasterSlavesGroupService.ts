@@ -60,7 +60,7 @@
         /** 注销 master */
         public OnUnregisteredFromMaster: EventHandler<[number]> = new EventHandler<[number]>();
         /** 注册为 slave */
-        public OnRegisteredAsSlave: EventHandler<[number]> = new EventHandler<[number]>();
+        public OnRegisteredAsSlave: EventHandler<[number, MasterClient, any]> = new EventHandler<[number, MasterClient, any]>();
         /** 注销 slave */
         public OnUnregisteredFromSlave: EventHandler<[number]> = new EventHandler<[number]>();
         /** 当服务器 master 集合发生变化 */
@@ -203,27 +203,27 @@
             }
         }
 
-        public RegisterAsSlave(masterId: string): void
+        public RegisterAsSlave(master: MasterClient): void
         {
             if (!this.isQuarying && WSBackend.singleton.IsConnected)
             {
                 this.isQuarying = true;
                 var data = 
                 {
-                    masterId : masterId
+                    masterId: master.clientId
                 };
                 this.state = MasterSlavesGroupServiceState.IsSlave;
                 BackendRequest.CreateRetry(
                     MasterSlavesGroupService.serviceName,
                     BackendOps.Cmd_RegisterAsSlave,
                     data,
-                    null,
+                    master,
                     // resp
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
                         this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.IsSlave : MasterSlavesGroupServiceState.Idle;
-                        this.OnRegisteredAsSlave.Trigger(errCode);
+                        this.OnRegisteredAsSlave.Trigger(errCode, context, data);
                     }
                 );
             }

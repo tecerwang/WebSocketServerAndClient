@@ -1,7 +1,6 @@
 ﻿namespace WebsocketTSClient
 {
-    type EventParams = any[];
-    export class EventHandler<T extends EventParams>
+    export class EventHandler<T extends any[]>
     {
         private event: ((...args: T) => void)[] = [];
 

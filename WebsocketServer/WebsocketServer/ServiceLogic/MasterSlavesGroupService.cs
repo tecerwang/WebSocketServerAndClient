@@ -73,18 +73,22 @@ namespace WebSocketServer.ServiceLogic
             {
                 return;
             }
+
+            await _dataProvider.UnregisterListener(clientId);
+
+            var master = await _dataProvider.UnregisterMaster(clientId);
             // 当一个客户端 close 时，需要查看是否在 master collection 中，如果在，需要注销这个 master，并且发出通知
-            var master = await _dataProvider.GetMasterByClientId(clientId);
             if (master != null)
             {
                 await Send_MasterChanged_2_Listenrs(_dataProvider, master, false);
-                await _dataProvider.UnregisterMaster(master);
             }
-
-            var slave = await _dataProvider.GetSlaveByClientId(clientId);
-            if (slave != null)
-            { 
-                await _dataProvider.UnregisterSlave(slave);
+            else
+            {
+                var slave = await _dataProvider.GetSlaveByClientId(clientId);
+                if (slave != null)
+                {
+                    await _dataProvider.UnregisterSlave(slave);
+                }
             }
         }
 
@@ -194,27 +198,30 @@ namespace WebSocketServer.ServiceLogic
                 return;
             }
             var master = await dataProvider.GetMasterByClientId(clientId);
-            var masterData = JHelper.GetJsonToken(pack.data, "masterData");
             if (master != null)
             {
-                master.masterName = masterName;
-                master.masterData = masterData;
+                await CreateResponseToClient(pack, null, ErrCode.AlreadyRegistered);
+                return;
             }
             else
             {
+                var masterData = JHelper.GetJsonToken(pack.data, "masterData");
                 master = new MasterClient() { clientId = clientId, masterName = masterName, masterData = masterData };
-                await dataProvider.RegisterMaster(master);
-                DebugLog.Print("MasterSlavesGroupService", "RegisterMaster", master.clientId);
+                if (await dataProvider.RegisterMaster(master))
+                {
+                    await Send_MasterChanged_2_Listenrs(dataProvider, master, true);
+                    await CreateResponseToClient(pack, null, ErrCode.OK);
+                    DebugLog.Print("MasterSlavesGroupService", "RegisterMaster", master.clientId);
+                    return;
+                }                
             }
-            await Send_MasterChanged_2_Listenrs(dataProvider, master, true);
-            await CreateResponseToClient(pack, null, ErrCode.OK);
+            await CreateResponseToClient(pack, null, ErrCode.Unkown);
         }
 
         private async Task HandleUnregisterFromMaster(MasterSlavesGroupData dataProvider, RequestPack pack)
         {
             var clientId = pack.clientId;
-            var master = await dataProvider.GetMasterByClientId(clientId);
-            await dataProvider.UnregisterMaster(master);
+            var master = await dataProvider.UnregisterMaster(clientId);
             if (master != null)
             {
                 await Send_MasterChanged_2_Listenrs(dataProvider, master, false);

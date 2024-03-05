@@ -54,7 +54,7 @@
                 const masterId = (document.getElementById('inputMasterId') as HTMLInputElement).value;
                 if (masterId)
                 {
-                    service.RegisterAsSlave(masterId);
+                    service.RegisterAsSlave(new MasterClient(masterId, "tempName", true));
                 }
             });
 

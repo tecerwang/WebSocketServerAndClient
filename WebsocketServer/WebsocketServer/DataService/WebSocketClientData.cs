@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Collections.Concurrent;
+using System.Net.WebSockets;
 using WebSocketServer.ServerKernal;
 using WebSocketServer.Utilities;
 
@@ -12,7 +13,7 @@ namespace WebSocketServer.DataService
         /// <summary>
         /// 客户端Id -> 客户端连接 字典
         /// </summary>
-        private Dictionary<string, WebSocketClientConnection> connectedClients = new Dictionary<string, WebSocketClientConnection>();
+        private ConcurrentDictionary<string, WebSocketClientConnection> connectedClients = new ConcurrentDictionary<string, WebSocketClientConnection>();
 
         /// <summary>
         /// 添加到一个客户端
@@ -21,15 +22,7 @@ namespace WebSocketServer.DataService
         /// <returns></returns>
         internal Task<bool> AddConnection(WebSocketClientConnection conn)
         {
-            if (connectedClients.ContainsKey(conn.clientId))
-            {
-                return Task.FromResult(false);
-            }
-            else
-            {
-                connectedClients.Add(conn.clientId, conn);
-                return Task.FromResult(true);
-            }
+            return Task.FromResult(connectedClients.TryAdd(conn.clientId, conn));
         }
 
         /// <summary>
@@ -39,10 +32,9 @@ namespace WebSocketServer.DataService
         /// <returns></returns>
         internal Task<bool> RemoveConnection(string connId)
         {
-            if (!string.IsNullOrEmpty(connId) && connectedClients.ContainsKey(connId))
+            if (!string.IsNullOrEmpty(connId))
             {
-                connectedClients.Remove(connId);
-                return Task.FromResult(true);
+                return Task.FromResult(connectedClients.TryRemove(connId, out _));
             }
             else
             {

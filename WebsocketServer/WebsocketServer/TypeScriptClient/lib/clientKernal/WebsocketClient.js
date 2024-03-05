@@ -1,7 +1,7 @@
 var WebsocketTSClient;
 (function (WebsocketTSClient) {
-    var WebSocketClient = /** @class */ (function () {
-        function WebSocketClient(url, clientId) {
+    class WebSocketClient {
+        constructor(url, clientId) {
             this.url = url;
             this.clientId = clientId;
             this.reconnectInterval = 2000; // 断线重连时间间隔
@@ -15,68 +15,65 @@ var WebsocketTSClient;
              */
             this.OnMessageReceived = new WebsocketTSClient.EventHandler();
         }
-        WebSocketClient.prototype.Connect = function () {
-            var _this = this;
+        Connect() {
             this.socket = new WebSocket(this.url + "?clientId=" + this.clientId);
-            this.socket.onopen = function (event) {
-                _this._isConnectionOpen = true;
+            this.socket.onopen = (event) => {
+                this._isConnectionOpen = true;
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connected');
-                _this.ClearReconnectTimer(); // 连接时清除计时器
-                _this.OnStateChanged.Trigger(true);
+                this.ClearReconnectTimer(); // 连接时清除计时器
+                this.OnStateChanged.Trigger(true);
             };
-            this.socket.onmessage = function (event) {
+            this.socket.onmessage = (event) => {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] Message received:', event.data);
-                _this.OnMessageReceived.Trigger(event.data);
+                this.OnMessageReceived.Trigger(event.data);
             };
-            this.socket.onclose = function (event) {
-                _this._isConnectionOpen = false;
+            this.socket.onclose = (event) => {
+                this._isConnectionOpen = false;
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] connection broken, reconnect start');
-                _this.ScheduleReconnect(); // 连接断开，开启断线重连
-                _this.OnStateChanged.Trigger(false);
+                this.ScheduleReconnect(); // 连接断开，开启断线重连
+                this.OnStateChanged.Trigger(false);
             };
-            this.socket.onerror = function (error) {
-                _this._isConnectionOpen = true;
+            this.socket.onerror = (error) => {
+                this._isConnectionOpen = true;
                 console.error('[WebSocketClient] error:', error, "reconnect start");
-                _this.ScheduleReconnect(); // 连接错误，开启断线重连
-                _this.OnStateChanged.Trigger(false);
+                this.ScheduleReconnect(); // 连接错误，开启断线重连
+                this.OnStateChanged.Trigger(false);
             };
-        };
-        WebSocketClient.prototype.ScheduleReconnect = function () {
-            var _this = this;
+        }
+        ScheduleReconnect() {
             // Clear existing reconnect timer to avoid multiple timers
             this.ClearReconnectTimer();
             // Schedule reconnection after the specified interval
-            this.reconnectTimer = setTimeout(function () {
+            this.reconnectTimer = setTimeout(() => {
                 WebsocketTSClient.Utility.LogDebug('[WebSocketClient] reconnecting...');
-                _this.Connect();
+                this.Connect();
             }, this.reconnectInterval);
-        };
-        WebSocketClient.prototype.ClearReconnectTimer = function () {
+        }
+        ClearReconnectTimer() {
             // Clear the reconnect timer if it's set
             if (this.reconnectTimer) {
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = null;
             }
-        };
+        }
         /**
          * ws 是否正在连接中
          */
-        WebSocketClient.prototype.IsConnected = function () {
+        IsConnected() {
             return this._isConnectionOpen;
-        };
+        }
         /**
         * 发送消息
         */
-        WebSocketClient.prototype.SendMsg = function (message) {
+        SendMsg(message) {
             this.socket.send(message);
-        };
+        }
         /**
          * 关闭连接
          */
-        WebSocketClient.prototype.Close = function () {
+        Close() {
             this.socket.close();
-        };
-        return WebSocketClient;
-    }());
+        }
+    }
     WebsocketTSClient.WebSocketClient = WebSocketClient;
 })(WebsocketTSClient || (WebsocketTSClient = {}));

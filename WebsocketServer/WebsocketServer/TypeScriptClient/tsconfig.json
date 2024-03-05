@@ -1,4 +1,9 @@
 {
+  "moduleResolution": "nodenext",
+  "compilerOptions": {
+    "target": "ES6",
+    "baseUrl": "./"
+  },
   "exclude": [
     "typings/browser.d.ts",
     "typings/browser",

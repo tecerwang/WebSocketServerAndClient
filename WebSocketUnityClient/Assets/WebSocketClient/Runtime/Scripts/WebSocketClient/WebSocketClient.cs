@@ -215,7 +215,8 @@ namespace WebSocketClient
             }
             catch (Exception ex)
             {
-                Utility.LogExpection("xxx " + ex.ToString());
+                Utility.LogExpection("[WebSocket Client] " + ex.ToString());
+                await RecoveryConnectionAsync();
             }
         }
 

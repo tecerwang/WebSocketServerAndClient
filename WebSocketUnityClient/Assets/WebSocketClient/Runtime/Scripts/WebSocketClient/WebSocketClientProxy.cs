@@ -102,7 +102,13 @@ namespace WebSocketClient
                 if (_client != null && _client.State == WebSocketClient.ClientState.open)
                 {
                     /// client 状态发生变化时，代理状态也发生变化
-                    _client.OnClientStateChanged += () => OnClientStateChanged?.Invoke();
+                    Action tempAction = null;
+                    tempAction = ()=>
+                    {
+                        _client.OnClientStateChanged -= tempAction;
+                        OnClientStateChanged?.Invoke();
+                    };
+                    _client.OnClientStateChanged += tempAction;
                     Utility.LogInternalDebug($"[WebSocket Client Proxy {clientSubName}] is opend");
                     result.isSuccessful = true;
 

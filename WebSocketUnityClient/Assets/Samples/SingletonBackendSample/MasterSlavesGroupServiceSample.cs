@@ -112,7 +112,7 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         if (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
         {
             BackendManager.singleton.msGroupManager.RegisterAsListener();
-        }
+        }       
         ResetUIState();
     }
 
