@@ -169,7 +169,7 @@ namespace WebSocketClient
         private int _recoveryConnTimes = 0;
 
         /// <summary>
-        /// 恢复连接
+        /// 恢复连接,分别在 recieve msg ,send msg 出现 Exception 调用
         /// </summary>
         /// <returns></returns>
         public async Task RecoveryConnectionAsync()
@@ -224,9 +224,8 @@ namespace WebSocketClient
         /// </summary>
         /// <param name="message"></param>
         /// <returns>发送消息是否成功</returns>
-        public async Task<bool> SendMessageAsync(string message)
+        public async Task SendMessageAsync(string message)
         {
-            bool isSendMsgSuccessful = false;
             if (_clientWS != null && _clientWS.State == WebSocketState.Open)
             {
                 var timeOutCancellation = new CancellationTokenSource();
@@ -237,9 +236,8 @@ namespace WebSocketClient
                     var bytes = System.Text.Encoding.UTF8.GetBytes(message);
                     await _clientWS.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, timeOutCancellation.Token);
                     Utility.LogInternalDebug("WebsocketClient",$"--> {message}");
-                    isSendMsgSuccessful = true;
                 }
-                catch (Exception ex)
+                catch (System.Net.WebSockets.WebSocketException ex)
                 {
                     if (timeOutCancellation.IsCancellationRequested)
                     {
@@ -248,18 +246,36 @@ namespace WebSocketClient
                     else
                     {
                         Utility.LogExpection("[WebSocket Client] SendMessage exception : ", ex.ToString());
+
+                        // doc :
+                        //"ConnectionClosedPrematurely" in the context of WebSocket communication typically means that the WebSocket connection was closed unexpectedly before the expected
+                        //closing handshake was completed. In WebSocket communication, both the client and server are supposed to perform a closing handshake to properly terminate the
+                        //connection.This handshake involves exchanging close control frames between the client and server to signal the intention to close the connection and ensure that
+                        //both sides are aware that the connection is being closed. However, if the connection is terminated abruptly without completing this handshake, it indicates that
+                        //the connection was closed prematurely. This could happen due to various reasons such as network issues, server - side errors, or intentional closing of the connection
+                        //by one of the parties without following the proper protocol.
+                        if (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                        {
+                            // 测试时出现了 ' System.Net.WebSockets.WebSocketException (0x80004005): The remote party closed the WebSocket connection without completing the close handshake.'
+                            // 这种情况出现在关闭服务器程序后，长时间不连接
+                            // how to fix : 添加下一行代码 await CloseAsync()
+                            timeOutCancellation.Dispose();
+                            timeOutCancellation = null;
+                            await RecoveryConnectionAsync();
+                        }
                     }
                 }
                 finally
                 {
-                    timeOutCancellation.Dispose();
+                    // 如果在发出消息时出现 ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely
+                    // 此时 timeOutCancellation 已经设置为Null
+                    timeOutCancellation?.Dispose();
                 }
             }
             else
             {
                 Utility.LogError("[WebSocket Client] SendMessageAsync is null or connection is not open");
             }
-            return isSendMsgSuccessful;
         }
 
         private object _receiveMesgCancelTokenLock = new object();
@@ -366,7 +382,10 @@ namespace WebSocketClient
                     {
                         Utility.LogExpection($"[WebSocket Client] Receieve messege exception : {ex.Message}");
                         //case : 远程方在没有完成关闭握手的情况下关闭了 WebSocket 连接
-                        await RecoveryConnectionAsync();
+                        if (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                        {
+                            await RecoveryConnectionAsync();
+                        }
                     }
                     else
                     {
