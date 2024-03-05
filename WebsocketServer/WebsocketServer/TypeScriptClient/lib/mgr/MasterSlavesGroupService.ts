@@ -7,6 +7,44 @@
         IsSlave
     }
 
+    export class MasterClient
+    {
+        public clientId: string;
+        public masterName: string;
+        public isOnline: boolean;        
+
+        constructor(clientId: string, masterName: string, isOnline: boolean)
+        {
+            this.clientId = clientId;
+            this.masterName = masterName;
+            this.isOnline = isOnline;
+        }
+
+        public static parse(json: any): MasterClient | null
+        {
+            if (!json || typeof json !== 'object')
+            {
+                return null;
+            }
+
+            const clientId = json.clientId;
+            const masterName = json.masterName;
+            const isOnline = json.isOnline;
+
+            if (typeof clientId !== 'string' || typeof masterName !== 'string' || typeof isOnline !== 'boolean')
+            {
+                return null;
+            }
+
+            return new MasterClient(clientId, masterName, isOnline);
+        }
+
+        public toString(): string
+        {
+            return `masterName: ${this.masterName}, isOnline: ${this.isOnline}, clientId: ${this.clientId}`;
+        }
+    }
+
     export class MasterSlavesGroupService
     {
         /** 服务名称 */
@@ -26,9 +64,9 @@
         /** 注销 slave */
         public OnUnregisteredFromSlave: EventHandler<[number]> = new EventHandler<[number]>();
         /** 当服务器 master 集合发生变化 */
-        public OnMasterCollectionChanged: EventHandler<[string, number]> = new EventHandler<[string, number]>();
+        public OnMasterCollectionChanged: EventHandler<[MasterClient]> = new EventHandler<[MasterClient]>();
         /** 获取所有 master */
-        public OnGetAllMasters: EventHandler<[number, any]> = new EventHandler<[number, any]>();
+        public OnGetAllMasters: EventHandler<[number, MasterClient[]]> = new EventHandler<[number, MasterClient[]]>();
         /** 广播消息 */
         public OnBroadcast: EventHandler<[number]> = new EventHandler<[number]>();
         /** 接收到广播消息 */
@@ -58,19 +96,17 @@
 
         private OnBackendNotify = (not: NotifyPack): void =>
         {
-            if (not.serviceName == MasterSlavesGroupService.serviceName)
+            if (not.serviceName === MasterSlavesGroupService.serviceName)
             {
                 // 收到服务器 master 集合变化的消息
-                if (not.cmd == BackendOps.Notify_OnMasterCollectionChanged)
+                if (not.cmd === BackendOps.Notify_OnMasterCollectionChanged)
                 {
-                   
-                    var masterId = not.data["masterId"];
-                    var isOnline = not.data["Online"]; 
-                    Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterId, isOnline);
-                    this.OnMasterCollectionChanged.Trigger(masterId, isOnline);
+                    const master: MasterClient | null = MasterClient.parse(not.data);
+                    Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", master.toString());
+                    this.OnMasterCollectionChanged.Trigger(master);
                 }
                 // 收到广播消息
-                if (not.cmd == BackendOps.Cmd_Broadcast)
+                if (not.cmd === BackendOps.Cmd_Broadcast)
                 {
                     this.OnRecievedBroadcast.Trigger(not.data);
                 }
@@ -91,7 +127,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                         this.OnRegisteredAsListener.Trigger(errCode);
                     }
                 );
@@ -112,7 +148,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                         this.OnUnregisteredFromListener.Trigger(errCode);
                     }
                 );
@@ -139,7 +175,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                         this.OnRegisteredAsMaster.Trigger(errCode);
                     }
                 );
@@ -160,7 +196,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsMaster;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsMaster;
                         this.OnUnregisteredFromMaster.Trigger(errCode);
                     }
                 );
@@ -186,7 +222,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.IsSlave : MasterSlavesGroupServiceState.Idle;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.IsSlave : MasterSlavesGroupServiceState.Idle;
                         this.OnRegisteredAsSlave.Trigger(errCode);
                     }
                 );
@@ -207,7 +243,7 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.state = errCode == ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsSlave;
+                        this.state = errCode === ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsSlave;
                         this.OnUnregisteredFromSlave.Trigger(errCode);
                     }
                 );
@@ -228,7 +264,22 @@
                     (errCode: number, data: any, context: any) =>
                     {
                         this.isQuarying = false;
-                        this.OnGetAllMasters.Trigger(errCode, data);
+
+                        const result: MasterClient[] = [];
+                        const jarr: any[] | null = data["masters"];
+
+                        if (jarr !== null)
+                        {
+                            jarr.forEach((jobj) =>
+                            {
+                                var mc = MasterClient.parse(jobj);
+                                if (mc !== null)
+                                {
+                                    result.push(mc);
+                                }
+                            });
+                        }
+                        this.OnGetAllMasters.Trigger(errCode, result);
                     }
                 );
             }

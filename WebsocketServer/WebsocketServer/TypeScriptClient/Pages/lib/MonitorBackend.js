@@ -38,42 +38,45 @@ var HTMLClient;
 (function (HTMLClient) {
     var Utility = WebsocketTSClient.Utility;
     var WSBackend = WebsocketTSClient.WSBackend;
-    var MonitorPage = /** @class */ (function () {
-        function MonitorPage() {
+    /// 页面负责交互逻辑的部分
+    var MonitorBackend = /** @class */ (function () {
+        function MonitorBackend() {
             this.wsBackend = null;
             this.service = null;
             this.init();
         }
-        MonitorPage.prototype.init = function () {
+        MonitorBackend.prototype.init = function () {
             return __awaiter(this, void 0, void 0, function () {
                 var backendUrl;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             backendUrl = 'ws://localhost:8080/ws';
-                            Utility.LogDebug("[HTML]", "Create singleton backend start");
+                            Utility.LogDebug("[MonitorBackend]", "Create singleton backend start");
                             if (!WSBackend.CreateSingleton(backendUrl)) return [3 /*break*/, 2];
-                            Utility.LogDebug("[HTML]", "Create singleton backend end");
+                            Utility.LogDebug("[MonitorBackend]", "Create singleton backend end");
                             this.wsBackend = WebsocketTSClient.WSBackend.singleton;
                             // await/async 异步等待服务器连接完成
-                            Utility.LogDebug("[HTML]", "Connect to server start");
+                            Utility.LogDebug("[MonitorBackend]", "Connect to server start");
                             return [4 /*yield*/, this.wsBackend.Connect2Server()];
                         case 1:
                             _a.sent();
-                            Utility.LogDebug("[HTML]", "Connect to server end");
+                            Utility.LogDebug("[MonitorBackend]", "Connect to server end");
                             // 创建一个 service 用于管理 MasterSlavesGroupService 通信服务
                             this.service = new WebsocketTSClient.MasterSlavesGroupService();
-                            this.service.RegisterAsMaster("name", null);
+                            // 设置事件
+                            // 注册 Listener 用于监听
+                            this.service.RegisterAsListener();
                             return [3 /*break*/, 3];
                         case 2:
-                            Utility.LogDebug("[HTML]", "singleton backend already created");
+                            Utility.LogDebug("[MonitorBackend]", "singleton backend already created");
                             _a.label = 3;
                         case 3: return [2 /*return*/];
                     }
                 });
             });
         };
-        return MonitorPage;
+        return MonitorBackend;
     }());
-    HTMLClient.MonitorPage = MonitorPage;
+    HTMLClient.MonitorBackend = MonitorBackend;
 })(HTMLClient || (HTMLClient = {}));

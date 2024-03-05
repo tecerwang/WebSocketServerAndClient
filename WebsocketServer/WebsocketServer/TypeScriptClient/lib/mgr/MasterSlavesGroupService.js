@@ -6,6 +6,30 @@ var WebsocketTSClient;
         MasterSlavesGroupServiceState[MasterSlavesGroupServiceState["IsMaster"] = 1] = "IsMaster";
         MasterSlavesGroupServiceState[MasterSlavesGroupServiceState["IsSlave"] = 2] = "IsSlave";
     })(MasterSlavesGroupServiceState = WebsocketTSClient.MasterSlavesGroupServiceState || (WebsocketTSClient.MasterSlavesGroupServiceState = {}));
+    var MasterClient = /** @class */ (function () {
+        function MasterClient(clientId, masterName, isOnline) {
+            this.clientId = clientId;
+            this.masterName = masterName;
+            this.isOnline = isOnline;
+        }
+        MasterClient.parse = function (json) {
+            if (!json || typeof json !== 'object') {
+                return null;
+            }
+            var clientId = json.clientId;
+            var masterName = json.masterName;
+            var isOnline = json.isOnline;
+            if (typeof clientId !== 'string' || typeof masterName !== 'string' || typeof isOnline !== 'boolean') {
+                return null;
+            }
+            return new MasterClient(clientId, masterName, isOnline);
+        };
+        MasterClient.prototype.toString = function () {
+            return "masterName: ".concat(this.masterName, ", isOnline: ").concat(this.isOnline, ", clientId: ").concat(this.clientId);
+        };
+        return MasterClient;
+    }());
+    WebsocketTSClient.MasterClient = MasterClient;
     var MasterSlavesGroupService = /** @class */ (function () {
         function MasterSlavesGroupService() {
             var _this = this;
@@ -39,16 +63,15 @@ var WebsocketTSClient;
                 }
             };
             this.OnBackendNotify = function (not) {
-                if (not.serviceName == MasterSlavesGroupService.serviceName) {
+                if (not.serviceName === MasterSlavesGroupService.serviceName) {
                     // 收到服务器 master 集合变化的消息
-                    if (not.cmd == WebsocketTSClient.BackendOps.Notify_OnMasterCollectionChanged) {
-                        var masterId = not.data["masterId"];
-                        var isOnline = not.data["Online"];
-                        WebsocketTSClient.Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterId, isOnline);
-                        _this.OnMasterCollectionChanged.Trigger(masterId, isOnline);
+                    if (not.cmd === WebsocketTSClient.BackendOps.Notify_OnMasterCollectionChanged) {
+                        var master = MasterClient.parse(not.data);
+                        WebsocketTSClient.Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", master.toString());
+                        _this.OnMasterCollectionChanged.Trigger(master);
                     }
                     // 收到广播消息
-                    if (not.cmd == WebsocketTSClient.BackendOps.Cmd_Broadcast) {
+                    if (not.cmd === WebsocketTSClient.BackendOps.Cmd_Broadcast) {
                         _this.OnRecievedBroadcast.Trigger(not.data);
                     }
                 }
@@ -67,7 +90,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                     _this.OnRegisteredAsListener.Trigger(errCode);
                 });
             }
@@ -80,7 +103,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                     _this.OnUnregisteredFromListener.Trigger(errCode);
                 });
             }
@@ -98,7 +121,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsMaster : MasterSlavesGroupServiceState.Idle;
                     _this.OnRegisteredAsMaster.Trigger(errCode);
                 });
             }
@@ -111,7 +134,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsMaster;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsMaster;
                     _this.OnUnregisteredFromMaster.Trigger(errCode);
                 });
             }
@@ -128,7 +151,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsSlave : MasterSlavesGroupServiceState.Idle;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.IsSlave : MasterSlavesGroupServiceState.Idle;
                     _this.OnRegisteredAsSlave.Trigger(errCode);
                 });
             }
@@ -141,7 +164,7 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.state = errCode == WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsSlave;
+                    _this.state = errCode === WebsocketTSClient.ErrCode.OK ? MasterSlavesGroupServiceState.Idle : MasterSlavesGroupServiceState.IsSlave;
                     _this.OnUnregisteredFromSlave.Trigger(errCode);
                 });
             }
@@ -154,7 +177,17 @@ var WebsocketTSClient;
                 // resp
                 function (errCode, data, context) {
                     _this.isQuarying = false;
-                    _this.OnGetAllMasters.Trigger(errCode, data);
+                    var result = [];
+                    var jarr = data["masters"];
+                    if (jarr !== null) {
+                        jarr.forEach(function (jobj) {
+                            var mc = MasterClient.parse(jobj);
+                            if (mc !== null) {
+                                result.push(mc);
+                            }
+                        });
+                    }
+                    _this.OnGetAllMasters.Trigger(errCode, result);
                 });
             }
         };

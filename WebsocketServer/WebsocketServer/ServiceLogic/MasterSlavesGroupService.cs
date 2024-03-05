@@ -31,6 +31,19 @@ namespace WebSocketServer.ServiceLogic
             {
                 return clientId.GetHashCode();
             }
+
+            public JToken ToJsonWithoutData(bool isOnline)
+            {
+                return JHelper.MakeData(
+                    "clientId", clientId,
+                    "masterName", masterName,
+                    "isOnline", isOnline);
+            }
+
+            public override string ToString()
+            {
+                return $"name:{masterName}, clientId:{clientId}";
+            }
         }
 
         public class SlaveClient
@@ -222,9 +235,7 @@ namespace WebSocketServer.ServiceLogic
             JArray jarr = new JArray();
             foreach (var master in masters)
             {
-                var jitem = new JObject();
-                jitem.Add("clientId", master.clientId);
-                jitem.Add("masterName", master.masterName);
+                var jitem = master.ToJsonWithoutData(true);
                 jarr.Add(jitem);
             }
             JObject jobj = JHelper.MakeData("masters", jarr);
@@ -346,14 +357,14 @@ namespace WebSocketServer.ServiceLogic
         /// <param name="dataProvider"></param>
         /// <param name="master"></param>
         /// <returns></returns>
-        private async Task Send_MasterChanged_2_Listenrs(MasterSlavesGroupData dataProvider, MasterClient master, bool IsOnline)
+        private async Task Send_MasterChanged_2_Listenrs(MasterSlavesGroupData dataProvider, MasterClient master, bool isOnline)
         {
-            JToken data = JHelper.MakeData("masterId", master.clientId, "Online", IsOnline);
+            JToken data = master.ToJsonWithoutData(isOnline);
             foreach (var clientId in (await dataProvider.GetAllListeners()))
             {
                 await CreateNotifyToClient(clientId, serviceName, BackendOps.Notify_OnMasterCollectionChanged, data);
             }
-            DebugLog.Print("MasterSlavesGroupService", master.clientId, IsOnline ? "Online" : "Offline");
+            DebugLog.Print("MasterSlavesGroupService", master.ToString(), isOnline ? "Online" : "Offline");
         }
     }
 }

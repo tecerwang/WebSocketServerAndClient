@@ -75,36 +75,29 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
 
         // 第一种方式设置菜单结构
         collection.StartFromRoot()
-            // 设置同级菜单
-            .Next(new MenuItem("菜单_1"))
-                // 设置子菜单
-                .Children((children) =>
-                {
-                    children.Next(new MenuItem("菜单_1_1"))
-                            .Next(new MenuItem("菜单_1_2"))
-                            .Next(new MenuItem("菜单_1_3"))
-                                .Children(children =>
-                                {
-                                    children.Next(new MenuItem("菜单_1_3_1"))
-                                            .Next(new MenuItem("菜单_1_3_2"))
-                                            .Next(new MenuItem("菜单_1_3_3"));
-                                })
-                            .Next(new MenuItem("菜单_1_4"));
-
-                })
-            .Next(new MenuItem("菜单_2"))
-            .Next(new MenuItem("菜单_3"))
-                .Children((children) =>
-                {
-                    children.Next(new MenuItem("菜单_3_1"))
-                                .Children(children =>
-                                {
-                                    children.Next(new MenuItem("菜单_3_1_1"))
-                                            .Next(new MenuItem("菜单_3_1_2"));
-                                })
-                            .Next(new MenuItem("菜单_3_2"));
-
-                });
+        // 设置同级菜单
+        .Next(new MenuItem("菜单_1")).Children((children) =>
+        {   // 设置子菜单
+            children.Next(new MenuItem("菜单_1_1"))
+                    .Next(new MenuItem("菜单_1_2"))
+                    .Next(new MenuItem("菜单_1_3")).Children(children =>
+                    {
+                        children.Next(new MenuItem("菜单_1_3_1"))
+                                .Next(new MenuItem("菜单_1_3_2"))
+                                .Next(new MenuItem("菜单_1_3_3"));
+                    })
+                    .Next(new MenuItem("菜单_1_4"));
+        })
+        .Next(new MenuItem("菜单_2"))
+        .Next(new MenuItem("菜单_3")).Children((children) =>
+         {
+             children.Next(new MenuItem("菜单_3_1")).Children(children =>
+             {
+                 children.Next(new MenuItem("菜单_3_1_1"))
+                         .Next(new MenuItem("菜单_3_1_2"));
+             })
+             .Next(new MenuItem("菜单_3_2"));
+         });
 
         // 第二种方式设置菜单结构，注意 CreateItem(menu,parent) 第二个参数时当前设置menu的父级
         var menu4 = collection.CreateRootItem(new MenuItem("菜单_4"));
@@ -200,14 +193,19 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         BackendManager.singleton.msGroupManager.GetAllMasters();
     }
 
-    private void MsGroupManager_OnGetAllMasters(int errCode, Newtonsoft.Json.Linq.JToken data)
+    private void MsGroupManager_OnGetAllMasters(int errCode, IEnumerable<MasterClient> masters)
     {
-
+        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnGetAllMasters result begin");
+        foreach (var master in masters)
+        {
+            Utility.LogDebug("MasterSlavesGroupServiceSample", master.ToString());
+        }
+        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnGetAllMasters result end");
     }
 
-    private void MsGroupManager_OnMasterCollectionChanged(string masterId, bool isOnline)
+    private void MsGroupManager_OnMasterCollectionChanged(MasterClient master)
     {
-        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnMasterCollectionChanged", masterId, isOnline);
+        Utility.LogDebug("MasterSlavesGroupServiceSample", "OnMasterCollectionChanged", master.ToString());
     }
 
     private void MsGroupManager_OnRecievedBroadcast(Newtonsoft.Json.Linq.JToken data)

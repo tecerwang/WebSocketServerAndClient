@@ -64,6 +64,9 @@ namespace WebSocketClient.Utilities.Data
             /// </summary>
             private readonly List<TreeItem<T>> items = new List<TreeItem<T>>();
 
+            private readonly List<TreeItem<T>> topMostItems = new List<TreeItem<T>>();
+
+
             /// <summary>
             /// 获取指定 ID 的节点
             /// </summary>
@@ -86,6 +89,15 @@ namespace WebSocketClient.Utilities.Data
             {
                 return items;
             }
+
+            /// <summary>
+            /// 获取所有顶级节点
+            /// </summary>
+            /// <returns></returns>
+            public IEnumerable<TreeItem<T>> GetTopMostItems()
+            {
+                return topMostItems;
+            }        
 
             /// <summary>
             /// Safe remove item, if the item has any children, it means it's a dependency node, it can not be removed until the children is clear
@@ -113,10 +125,16 @@ namespace WebSocketClient.Utilities.Data
             /// <param name="id">The ID of the item to remove</param>
             /// <returns>True if the item was removed successfully, otherwise false</returns>
             public bool RemoveItem(int id)
-            {
+            {       
+
                 TreeItem<T> itemToRemove = items.FirstOrDefault(item => item.Id == id);
                 if (itemToRemove != null)
                 {
+                    if (itemToRemove.ParentId == null)
+                    {
+                        topMostItems.Remove(itemToRemove);
+                    }
+
                     int removedIndex = items.IndexOf(itemToRemove);
 
                     // Remove the item from its parent's ChildrenIds list
@@ -168,6 +186,11 @@ namespace WebSocketClient.Utilities.Data
                 {
                     parent.ChildrenIds.Add(item.Id);
                 }
+                else 
+                {
+                    /// 没有 parent 就是顶级节点
+                    topMostItems.Add(item);
+                }
 
                 items.Add(item);
                 return item;
@@ -199,6 +222,37 @@ namespace WebSocketClient.Utilities.Data
                     arr.Add(item.ToJson().ToString(Newtonsoft.Json.Formatting.None));
                 }
                 return arr;
+            }
+
+            public static Collection Parse(JToken json)
+            {
+                Collection collection = new Collection();
+
+                if (json is JArray array)
+                {
+                    foreach (JToken itemToken in array)
+                    {
+                        int id = JHelper.GetJsonInt(itemToken, "Id");
+                        int? parentId = JHelper.GetJsonInt(itemToken, "ParentId");
+                        List<int> childrenIds = JHelper.GetJsonIntArray(itemToken, "ChildrenIds").ToList();
+                        // Since the data might be an object implementing INetworkTransport, we'll need to deserialize it
+                        
+                        var jData = JHelper.GetJsonToken(itemToken, "data");
+                        T data = jData.ToObject<T>();
+
+                        // Create the tree item
+                        TreeItem<T> treeItem = new TreeItem<T>(data)
+                        {
+                            Id = id,
+                            ParentId = parentId,
+                            ChildrenIds = childrenIds
+                        };
+
+                        // Add the tree item to the collection
+                        collection.items.Add(treeItem);
+                    }
+                }
+                return collection;
             }
         }
 

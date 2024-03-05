@@ -11,6 +11,40 @@ namespace WebSocketClient
 {
     public class MasterSlavesGroupService : BackendServiceManagerBase
     {
+        public class MasterClient
+        {
+            public string clientId;          
+            public string masterName;
+            public bool isOnline;
+
+            public static MasterClient Parse(JToken token)
+            {
+                if (token == null)
+                {
+                    return null;
+                }
+                var cid = JHelper.GetJsonString(token, "clientId");
+                var masterName = JHelper.GetJsonString(token, "masterName");
+                var isOnline = JHelper.GetJsonBool(token, "Online");
+
+                if (string.IsNullOrEmpty(cid))
+                {
+                    return null;
+                }
+                return new MasterClient()
+                {
+                    clientId = cid,
+                    masterName = masterName,
+                    isOnline = isOnline
+                };
+            }
+
+            public override string ToString()
+            {
+                return $"masterName:{masterName}, {isOnline}, clientId:{clientId}";
+            }
+        }
+
         public enum ClientState
         {
             Idle,           
@@ -57,12 +91,12 @@ namespace WebSocketClient
         /// <summary>
         /// 服务器上的 master 集合发生变化
         /// </summary>
-        public event Action<string, bool> OnMasterCollectionChanged;
+        public event Action<MasterClient> OnMasterCollectionChanged;
 
         /// <summary>
         /// 获取所有的 master
         /// </summary>
-        public event Action<int, JToken> OnGetAllMasters;
+        public event Action<int, IEnumerable<MasterClient>> OnGetAllMasters;
 
         /// <summary>
         /// 广播消息完成
@@ -106,10 +140,12 @@ namespace WebSocketClient
                 // master collectoion on server changed
                 if (cmd == BackendOps.Notify_OnMasterCollectionChanged)
                 {
-                    var masterId = JHelper.GetJsonString(data, "masterId");
-                    var isOnline = JHelper.GetJsonBool(data, "Online");
-                    Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterId, isOnline);
-                    OnMasterCollectionChanged?.Invoke(masterId, isOnline);
+                    var masterClient=  MasterClient.Parse(data);
+                    if (masterClient != null)
+                    {
+                        Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterClient);
+                        OnMasterCollectionChanged?.Invoke(masterClient);
+                    }
                 }
                 // 收到别人发送的消息
                 else if (cmd == BackendOps.Cmd_Broadcast)
@@ -248,8 +284,21 @@ namespace WebSocketClient
                 BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_GetAllMasters, null, null, 
                     (int errCode, JToken data, object context)=> {
                         _isQuarying = false;
-                        Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters End", errCode);
-                        OnGetAllMasters?.Invoke(errCode, data);
+                        List<MasterClient> list = new List<MasterClient>();
+                        var arr = JHelper.GetJsonArray(data, "masters");
+                        if (data != null)
+                        {
+                            foreach (var d in arr)
+                            {
+                                var master = MasterClient.Parse(d);
+                                if (master != null)
+                                {
+                                    list.Add(master);
+                                }
+                            }
+                        }
+                        Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters End", $"Get {list.Count} masters");
+                        OnGetAllMasters?.Invoke(errCode, list);
                     });
             }
         }

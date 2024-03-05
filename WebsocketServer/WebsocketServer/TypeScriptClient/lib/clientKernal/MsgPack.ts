@@ -3,9 +3,9 @@
     abstract class MsgPack
     {
         public clientId: string;
-        public serviceName?: string | null;
-        public data?: JSON | null;
-        public cmd?: string | null;
+        public serviceName: string | null;
+        public data: any | null;
+        public cmd: string | null;
         public utcTicks: number;
 
         public abstract type: string;
