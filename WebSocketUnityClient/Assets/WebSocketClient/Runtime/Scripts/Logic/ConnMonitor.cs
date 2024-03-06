@@ -19,9 +19,7 @@ namespace WebSocketClient
 
         private WSBackend _backend;
 
-        private DateTime _lastCommunicateTime;
-
-        private const int _intervalMS = 2000;
+        private const int _intervalMS = 5000;
 
         public void Init()
         {
@@ -39,57 +37,59 @@ namespace WebSocketClient
 
         private void Backend_OnBackendResponse(ResponsePack resp)
         {
-            _lastCommunicateTime = DateTime.Now;
+            StartNewHeartBeatTick();
         }
 
         private void Backend_OnBackendNotify(NotifyPack not)
         {
-            _lastCommunicateTime = DateTime.Now;
+            StartNewHeartBeatTick();
         }
 
+        /// <summary>
+        /// 收到任何消息后，需要重置心跳时间，并且终端当前的心跳计时
+        /// </summary>
         private CancellationTokenSource _heartBeatCTS;
+
+        private void StartNewHeartBeatTick()
+        {
+            if (_heartBeatCTS != null)
+            {
+                _heartBeatCTS.Cancel();
+                _heartBeatCTS.Dispose();
+            }
+            _heartBeatCTS = new CancellationTokenSource();
+            Task.Run(async () =>
+            {
+                while (_heartBeatCTS != null && !_heartBeatCTS.IsCancellationRequested)
+                {
+                    // Delay before sending ping
+                    await Task.Delay(_intervalMS, _heartBeatCTS.Token);
+
+                    // Check cancellation before sending ping
+                    if (_heartBeatCTS.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    // Send ping
+                    Utility.LogDebug("ConnMonitor", "send wsping");
+                    await _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
+                }
+            });
+        }
 
         private void Singleton_OnBackendStateChanged()
         {
-            return;
             if (_backend.State == WSBackend.WSBackendState.Open)
             {
-                _heartBeatCTS = new CancellationTokenSource();
-                _lastCommunicateTime = DateTime.Now;
-                Task.Run(async () =>
-                {
-                    Utility.LogDebug("ConnMonitor", "heart beat monitor start");
-                    while (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
-                    {
-                        var curTime = DateTime.Now;
-                        var curInterval = (curTime - _lastCommunicateTime).TotalMilliseconds;
-                        if (curInterval > _intervalMS * 2)
-                        {
-                            await WSBackend.singleton.CloseAsync();
-                            break;
-                        }
-                        else if (curInterval > _intervalMS)
-                        {
-                            await _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
-                            await Task.Delay(_intervalMS, _heartBeatCTS.Token);
-                        }
-                        else
-                        {
-                            await Task.Delay((int)(_intervalMS - curInterval), _heartBeatCTS.Token);
-                        }
-                        if (_backend.State == WSBackend.WSBackendState.Close)
-                        {
-                            break;
-                        }
-                    }
-                    Utility.LogDebug("ConnMonitor", "heart beat monitor end");
-                    await WSBackend.singleton.Connect2ServerAsync();
-                }, _heartBeatCTS.Token);
+                Utility.LogDebug("ConnMonitor", "heart beat monitor start");
+                StartNewHeartBeatTick();
             }
             else
             {
                 _heartBeatCTS.Cancel();
                 _heartBeatCTS.Dispose();
+                _heartBeatCTS = null;
                 Utility.LogDebug("ConnMonitor", "heart beat monitor cancel by ws close");
             }
         }
