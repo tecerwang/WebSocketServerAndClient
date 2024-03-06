@@ -3,6 +3,8 @@ namespace HTMLClient
 {
     type MasterClient = WebsocketTSClient.MasterClient;
     type EventHandler<T extends any[]> = WebsocketTSClient.EventHandler<T>;
+    type TreeItem<T extends object> =   WebsocketTSClient.TreeItem<T>;
+    type TreeItemCollection<T extends object> = WebsocketTSClient.TreeItem.Collection<T>;
 
     export class MainPage extends HTMLElement
     {
@@ -19,6 +21,9 @@ namespace HTMLClient
 
         /** 返回到主页面 */
         public OnBack2Main: EventHandler<[]> = new WebsocketTSClient.EventHandler<[]>();
+
+        /** 当点击某一个菜单按键  topMost:boolean , id:number */
+        public OnMenuItemClick: EventHandler<[boolean, number]> = new WebsocketTSClient.EventHandler<[boolean, number]>();
 
         constructor()
         {
@@ -93,11 +98,9 @@ namespace HTMLClient
             this.menuPanelTitle.classList.add('title');
             this.menuBtnsPanel = document.createElement('div');
             this.btnBack = document.createElement('button');
+            this.btnBack.classList.add('btnReturn');
             this.btnBack.textContent = "返回主页";
-            this.btnBack.addEventListener('click', () =>
-            {
-                this.OnBack2Main.Trigger();
-            });
+            this.btnBack.addEventListener('click', () => this.BtnReturnClick());
             // panel
             this.rootDiv.appendChild(this.menuPanel);
             // pane->title div
@@ -111,7 +114,6 @@ namespace HTMLClient
 
             this.menuPanel.hidden = true;
         }
-
 
         public ResetMasterBtns(masters: MasterClient[] | null): void
         {
@@ -163,13 +165,53 @@ namespace HTMLClient
             }
         }
 
-        public DisplayMenuItems(masterName : string, menus : MenuItem[]) : void
+        private collection: TreeItemCollection<MenuItem> | null;
+        /** 当前的父节点 Id */
+        private curParentId: number | null = null;
+
+        public SetupMenus(masterName : string, menus : any) : void
         {
             this.mastersPanel.hidden = true;
             this.menuPanel.hidden = false;
             this.menuPanelTitle.textContent = masterName;
+            // 解析数据
+            this.collection = WebsocketTSClient.TreeItem.Collection.parse(menus);
+            // 获取顶层按键
+            this.DisplayMenuItems(this.collection.getTopMostItems());
+            this.updateBtnBackUI();
+            this.curParentId = null;
+        }
+
+        private DisplayMenuItems(menus: TreeItem<MenuItem>[]) : boolean // 是否成功建立子菜单，todo 可能选择不同样式作为参数
+        {
+            if (menus == null || menus.length == 0)
+            {
+                return false;
+            }
             this.RemoveChildren(this.menuBtnsPanel);
-            // todo show menu btns
+            menus.forEach((menu) =>
+            {
+                var btn = document.createElement('button');
+                const hasChildren = menu.childrenIds != null && menu.childrenIds.length > 0;
+                btn.classList.add(hasChildren ? 'btnMenu' : "btnSealedMenu");
+                btn.textContent = (menu.data as MenuItem).name;
+                btn.addEventListener("click", () =>
+                {
+                    const childrenMenus = this.collection.getChildrenItemsById(menu.id);
+                    if (this.DisplayMenuItems(childrenMenus))
+                    {
+                        this.curParentId = menu.id;
+                        this.OnMenuItemClick?.Trigger(false, menu.id);
+                    }
+                    else
+                    {
+                        this.OnMenuItemClick?.Trigger(menu.parentId == null, menu.id);
+                    }
+                    this.updateBtnBackUI();
+                });
+                this.menuBtnsPanel.appendChild(btn);
+            });
+            return true;
         }
 
         public Back2MainPage(): void
@@ -177,6 +219,43 @@ namespace HTMLClient
             this.mastersPanel.hidden = false;
             this.menuPanel.hidden = true;
             this.RemoveChildren(this.menuBtnsPanel);
+        }
+
+        private BtnReturnClick(): void
+        {
+            // 如果没有父级菜单，则返回到主页
+            if (this.curParentId == null)
+            {
+                this.mastersPanel.hidden = false;
+                this.menuPanel.hidden = true;
+                this.RemoveChildren(this.menuBtnsPanel);
+                this.OnBack2Main.Trigger();
+            }
+            else
+            {
+                var parentItem = this.collection.getItemById(this.curParentId);
+                var parentParentItem = this.collection.getItemById(parentItem.parentId);
+                var parentMenus: TreeItem<MenuItem>[] | null;
+                if (parentParentItem == null)
+                {
+                    parentMenus = this.collection.getTopMostItems();
+                }
+                else
+                {
+                    parentMenus = this.collection.getChildrenItemsById(parentParentItem.id);
+                }
+                if (this.DisplayMenuItems(parentMenus))
+                {
+                    this.curParentId = parentParentItem != null ? parentParentItem.id : null;
+                    this.OnMenuItemClick?.Trigger(parentParentItem == null, this.curParentId);
+                }
+            }
+            this.updateBtnBackUI();
+        }
+
+        private updateBtnBackUI(): void
+        {
+            this.btnBack.textContent = this.curParentId == null ? "返回主页" : "返回上级";
         }
     }
 }

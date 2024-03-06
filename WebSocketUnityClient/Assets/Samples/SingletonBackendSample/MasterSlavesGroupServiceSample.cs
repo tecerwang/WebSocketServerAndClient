@@ -28,6 +28,8 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
 
         await BackendManager.WaitForInitAsync();
 
+        inputMasterName.text = BackendManager.singleton.clientName;
+
         ResetUIState();
 
         /// 一步一步测试

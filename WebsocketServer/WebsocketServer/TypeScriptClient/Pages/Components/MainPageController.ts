@@ -33,31 +33,31 @@
                     this.service.UnregisterFromSlave();
                 }
             });
-
-            this.mainPage.ResetMasterBtns([
-                new WebsocketTSClient.MasterClient("1", "name1", true),
-                new WebsocketTSClient.MasterClient("2", "name2", true),
-                new WebsocketTSClient.MasterClient("3", "name3", true),
-                new WebsocketTSClient.MasterClient("4", "name4", true),
-            ]);
-
-            this.init();       
+            this.mainPage.OnMenuItemClick.AddListener((topMost: boolean, id: number) =>
+            {
+                const data = {
+                    "topMost": topMost,
+                    "id": id
+                };
+                this.service.Broadcast(data);
+            });
+            this.init();
         }
 
         async init()
         {
             const backendUrl = 'ws://localhost:8080/ws';
 
-            Utility.LogDebug("[MonitorManager]", "Create singleton backend start");
+            Utility.LogDebug("[MainPageController]", "Create singleton backend start");
             if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl))
             {
-                Utility.LogDebug("[MonitorManager]", "Create singleton backend end");
+                Utility.LogDebug("[MainPageController]", "Create singleton backend end");
 
                 this.wsBackend = WebsocketTSClient.WSBackend.singleton;
                 // await/async 异步等待服务器连接完成
-                Utility.LogDebug("[MonitorManager]", "Connect to server start");
+                Utility.LogDebug("[MainPageController]", "Connect to server start");
                 await this.wsBackend.Connect2Server();
-                Utility.LogDebug("[MonitorManager]", "Connect to server end");
+                Utility.LogDebug("[MainPageController]", "Connect to server end");
 
 
                 // 创建一个 service 用于管理 MasterSlavesGroupService 通信服务
@@ -71,27 +71,42 @@
                 this.service.OnGetAllMasters.AddListener((errCode, masters) => this.handleGetAllMasters(errCode, masters));
                 this.service.OnBroadcast.AddListener((errCode) => this.handleBroadcast(errCode));
                 this.service.OnRecievedBroadcast.AddListener((data) => this.handleReceivedBroadcast(data));
+                this.wsBackend.OnStateChanged.AddListener((state) =>
+                {
+                    if (state === true)
+                    {
+                        Utility.LogDebug("[MainPageController]", "backend reconnected and restart serviceStartup()");
+                        this.serviceStartupStep = -1;
+                        this.serviceStartup(0);
+                    }
+                }); // 重新连接后，重新运行启动步骤
 
                 this.serviceStartup(0);
                
             }
             else
             {
-                Utility.LogDebug("[MonitorManager]", "singleton backend already created");
+                Utility.LogDebug("[MainPageController]", "singleton backend already created");
             }
         }
 
         /** service 启动步骤 */
-        private serviceStartupStep: number = 0;
+        private serviceStartupStep: number = -1;
 
-        private async serviceStartup(targetStep : number)
+        private serviceStartup(targetStep : number)
         {
+            if (!this.wsBackend.IsConnected)
+            {
+                this.serviceStartupStep = -1;
+                return;
+            }
+
             if (this.serviceStartupStep === targetStep)
             {
-                await Utility.delay(2000);
+                return;
             }
-            this.serviceStartupStep = targetStep;
 
+            this.serviceStartupStep = targetStep;
             if (this.serviceStartupStep === 0)
             {
                 // 注册 Listener 用于监听
@@ -109,7 +124,7 @@
 
         private handleRegisteredAsListener(errCode: number) : void
         {
-            Utility.LogDebug("[MonitorManager]", "RegisteredAsListener", errCode);
+            Utility.LogDebug("[MainPageController]", "RegisteredAsListener", errCode);
             var targetStep = this.serviceStartupStep;
             if (errCode === ErrCode.OK)
             {
@@ -120,17 +135,17 @@
 
         private handleRegisteredAsSlave(errCode: number, master: MasterClient, data: any): void
         {
-            Utility.LogDebug("[MonitorManager]", "RegisteredAsSlave", errCode);
+            Utility.LogDebug("[MainPageController]", "RegisteredAsSlave", errCode);
             if (errCode === ErrCode.OK)
             {
                 this.masterClientId = master.clientId;
-                this.mainPage.DisplayMenuItems(master.masterName, data);
+                this.mainPage.SetupMenus(master.masterName, data);
             }
         }
 
         private handleUnregisteredFromSlave(errCode: number): void
         {
-            Utility.LogDebug("[MonitorManager]", "UnregisteredFromSlave", errCode);
+            Utility.LogDebug("[MainPageController]", "UnregisteredFromSlave", errCode);
             if (errCode == ErrCode.OK)
             {
                 this.masterClientId = null;
@@ -140,7 +155,7 @@
 
         private handleMasterCollectionChanged(master: MasterClient): void
         {
-            Utility.LogDebug("[MonitorManager]", "CollectionChanged", master.toString());
+            Utility.LogDebug("[MainPageController]", "CollectionChanged", master.toString());
             if (master.isOnline)
             {
                 this.mainPage.AddButton(master);
@@ -157,22 +172,22 @@
 
         private handleGetAllMasters(errCode : number, masters : MasterClient[]): void
         {
-            Utility.LogDebug("[MonitorManager]", "GetAllMasters", errCode);
+            Utility.LogDebug("[MainPageController]", "GetAllMasters", errCode);
             masters.forEach((master) =>
             {
-                Utility.LogDebug("[MonitorManager]", "---", master.toString());
+                Utility.LogDebug("[MainPageController]", "---", master.toString());
             });
             this.mainPage.ResetMasterBtns(masters);
         }
 
         private handleBroadcast(errCode: number): void
         {
-            Utility.LogDebug("[MonitorManager]", "Broadcast", errCode);
+            Utility.LogDebug("[MainPageController]", "Broadcast", errCode);
         }
 
         private handleReceivedBroadcast(data: any): void
         {
-            Utility.LogDebug("[MonitorManager]", "ReceivedBroadcast", data);
-        }     
+            Utility.LogDebug("[MainPageController]", "ReceivedBroadcast", data);
+        } 
     }
 }

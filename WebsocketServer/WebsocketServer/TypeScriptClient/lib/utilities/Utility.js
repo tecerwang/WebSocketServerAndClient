@@ -48,7 +48,8 @@ var WebsocketTSClient;
         static LogDebug(...data) {
             if (IsDebugEnv && data.length > 0) {
                 var str = "";
-                data.forEach((d) => { str += d; });
+                data.forEach((d) => { str += d + " "; });
+                str.substring(0, str.length - 1);
                 console.log(str);
             }
         }

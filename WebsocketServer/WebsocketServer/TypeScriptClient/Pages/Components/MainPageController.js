@@ -20,7 +20,7 @@ var HTMLClient;
             /** 当前的masterId */
             this.masterClientId = null;
             /** service 启动步骤 */
-            this.serviceStartupStep = 0;
+            this.serviceStartupStep = -1;
             customElements.define('main-page', HTMLClient.MainPage);
             this.mainPage = document.querySelector('main-page');
             this.mainPage.OnMasterBtnClick.AddListener((master, btn) => {
@@ -33,25 +33,26 @@ var HTMLClient;
                     this.service.UnregisterFromSlave();
                 }
             });
-            this.mainPage.ResetMasterBtns([
-                new WebsocketTSClient.MasterClient("1", "name1", true),
-                new WebsocketTSClient.MasterClient("2", "name2", true),
-                new WebsocketTSClient.MasterClient("3", "name3", true),
-                new WebsocketTSClient.MasterClient("4", "name4", true),
-            ]);
+            this.mainPage.OnMenuItemClick.AddListener((topMost, id) => {
+                const data = {
+                    "topMost": topMost,
+                    "id": id
+                };
+                this.service.Broadcast(data);
+            });
             this.init();
         }
         init() {
             return __awaiter(this, void 0, void 0, function* () {
                 const backendUrl = 'ws://localhost:8080/ws';
-                Utility.LogDebug("[MonitorManager]", "Create singleton backend start");
+                Utility.LogDebug("[MainPageController]", "Create singleton backend start");
                 if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl)) {
-                    Utility.LogDebug("[MonitorManager]", "Create singleton backend end");
+                    Utility.LogDebug("[MainPageController]", "Create singleton backend end");
                     this.wsBackend = WebsocketTSClient.WSBackend.singleton;
                     // await/async 异步等待服务器连接完成
-                    Utility.LogDebug("[MonitorManager]", "Connect to server start");
+                    Utility.LogDebug("[MainPageController]", "Connect to server start");
                     yield this.wsBackend.Connect2Server();
-                    Utility.LogDebug("[MonitorManager]", "Connect to server end");
+                    Utility.LogDebug("[MainPageController]", "Connect to server end");
                     // 创建一个 service 用于管理 MasterSlavesGroupService 通信服务
                     this.service = new WebsocketTSClient.MasterSlavesGroupService();
                     // 设置事件，只设置几个用到的事件
@@ -62,33 +63,42 @@ var HTMLClient;
                     this.service.OnGetAllMasters.AddListener((errCode, masters) => this.handleGetAllMasters(errCode, masters));
                     this.service.OnBroadcast.AddListener((errCode) => this.handleBroadcast(errCode));
                     this.service.OnRecievedBroadcast.AddListener((data) => this.handleReceivedBroadcast(data));
+                    this.wsBackend.OnStateChanged.AddListener((state) => {
+                        if (state === true) {
+                            Utility.LogDebug("[MainPageController]", "backend reconnected and restart serviceStartup()");
+                            this.serviceStartupStep = -1;
+                            this.serviceStartup(0);
+                        }
+                    }); // 重新连接后，重新运行启动步骤
                     this.serviceStartup(0);
                 }
                 else {
-                    Utility.LogDebug("[MonitorManager]", "singleton backend already created");
+                    Utility.LogDebug("[MainPageController]", "singleton backend already created");
                 }
             });
         }
         serviceStartup(targetStep) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (this.serviceStartupStep === targetStep) {
-                    yield Utility.delay(2000);
-                }
-                this.serviceStartupStep = targetStep;
-                if (this.serviceStartupStep === 0) {
-                    // 注册 Listener 用于监听
-                    this.service.RegisterAsListener();
-                    return;
-                }
-                if (this.serviceStartupStep === 1) {
-                    // 获取主界面按键信息
-                    this.service.GetAllMasters();
-                    return;
-                }
-            });
+            if (!this.wsBackend.IsConnected) {
+                this.serviceStartupStep = -1;
+                return;
+            }
+            if (this.serviceStartupStep === targetStep) {
+                return;
+            }
+            this.serviceStartupStep = targetStep;
+            if (this.serviceStartupStep === 0) {
+                // 注册 Listener 用于监听
+                this.service.RegisterAsListener();
+                return;
+            }
+            if (this.serviceStartupStep === 1) {
+                // 获取主界面按键信息
+                this.service.GetAllMasters();
+                return;
+            }
         }
         handleRegisteredAsListener(errCode) {
-            Utility.LogDebug("[MonitorManager]", "RegisteredAsListener", errCode);
+            Utility.LogDebug("[MainPageController]", "RegisteredAsListener", errCode);
             var targetStep = this.serviceStartupStep;
             if (errCode === ErrCode.OK) {
                 targetStep++;
@@ -96,21 +106,21 @@ var HTMLClient;
             this.serviceStartup(targetStep);
         }
         handleRegisteredAsSlave(errCode, master, data) {
-            Utility.LogDebug("[MonitorManager]", "RegisteredAsSlave", errCode);
+            Utility.LogDebug("[MainPageController]", "RegisteredAsSlave", errCode);
             if (errCode === ErrCode.OK) {
                 this.masterClientId = master.clientId;
-                this.mainPage.DisplayMenuItems(master.masterName, data);
+                this.mainPage.SetupMenus(master.masterName, data);
             }
         }
         handleUnregisteredFromSlave(errCode) {
-            Utility.LogDebug("[MonitorManager]", "UnregisteredFromSlave", errCode);
+            Utility.LogDebug("[MainPageController]", "UnregisteredFromSlave", errCode);
             if (errCode == ErrCode.OK) {
                 this.masterClientId = null;
                 this.mainPage.Back2MainPage();
             }
         }
         handleMasterCollectionChanged(master) {
-            Utility.LogDebug("[MonitorManager]", "CollectionChanged", master.toString());
+            Utility.LogDebug("[MainPageController]", "CollectionChanged", master.toString());
             if (master.isOnline) {
                 this.mainPage.AddButton(master);
             }
@@ -122,17 +132,17 @@ var HTMLClient;
             }
         }
         handleGetAllMasters(errCode, masters) {
-            Utility.LogDebug("[MonitorManager]", "GetAllMasters", errCode);
+            Utility.LogDebug("[MainPageController]", "GetAllMasters", errCode);
             masters.forEach((master) => {
-                Utility.LogDebug("[MonitorManager]", "---", master.toString());
+                Utility.LogDebug("[MainPageController]", "---", master.toString());
             });
             this.mainPage.ResetMasterBtns(masters);
         }
         handleBroadcast(errCode) {
-            Utility.LogDebug("[MonitorManager]", "Broadcast", errCode);
+            Utility.LogDebug("[MainPageController]", "Broadcast", errCode);
         }
         handleReceivedBroadcast(data) {
-            Utility.LogDebug("[MonitorManager]", "ReceivedBroadcast", data);
+            Utility.LogDebug("[MainPageController]", "ReceivedBroadcast", data);
         }
     }
     HTMLClient.MainPageController = MainPageController;

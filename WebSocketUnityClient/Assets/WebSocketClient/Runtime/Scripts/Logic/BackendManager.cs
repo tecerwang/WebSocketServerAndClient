@@ -28,6 +28,10 @@ namespace WebSocketClient
 
         public string backendUrl = defaultBackendUrl;
 
+        private const string defaultClientName = "Unity";
+
+        public string clientName = defaultClientName;
+
         private static TaskCompletionSource<bool> _waitForInitedAsyncTCS;
 
         /// <summary>
@@ -58,7 +62,7 @@ namespace WebSocketClient
             {           
 
                 // 初始化一个 client proxy gameObject
-                WSBackend.singleton.Init(backendUrl);
+                WSBackend.singleton.Init(backendUrl, clientName);
 
                 // 生成 manager instance
                 var managers = InitServiceManagerRefs();

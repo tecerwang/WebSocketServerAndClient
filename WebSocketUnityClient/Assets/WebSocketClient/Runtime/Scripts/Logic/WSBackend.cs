@@ -50,11 +50,11 @@ namespace WebSocketClient
         /// </summary>
         private WebSocketClient _wsClient;
 
-        public void Init(string url)
+        public void Init(string url, string clientName)
         {
             if (!_isInited)
             {
-                _clientId = GetClientConnectionId();
+                _clientId = GetClientConnectionId() + (string.IsNullOrEmpty(clientName) ? string.Empty : "_" + clientName);
                 _wsClient = new WebSocketClient(url + $"?clientId={_clientId}");
                 monoGameObject.StartCoroutine(HandleReceivedMsg());
                 _wsClient.OnClientStateChanged += OnClientStateChanged;           

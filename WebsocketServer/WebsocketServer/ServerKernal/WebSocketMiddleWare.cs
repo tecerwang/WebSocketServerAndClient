@@ -151,6 +151,7 @@ namespace WebSocketServer.ServerKernal
                 {
                     //case : 远程方在没有完成关闭握手的情况下关闭了 WebSocket 连接
                     DebugLog.Print($"Error processing WebSocket request: {ex.Message}");
+                    connection?.webSocket?.Dispose();
                 }
 
             }

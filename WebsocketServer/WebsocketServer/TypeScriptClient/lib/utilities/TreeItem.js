@@ -52,6 +52,20 @@ var WebsocketTSClient;
                 }
                 return null;
             }
+            getChildrenItemsById(id) {
+                const parentItem = this.getItemById(id);
+                if (parentItem) {
+                    const childrenItems = [];
+                    parentItem.childrenIds.forEach(childId => {
+                        const childItem = this.getItemById(childId);
+                        if (childItem) {
+                            childrenItems.push(childItem);
+                        }
+                    });
+                    return childrenItems;
+                }
+                return null;
+            }
             /**
              * 获取所有节点
              */
@@ -149,7 +163,8 @@ var WebsocketTSClient;
             static parse(json) {
                 const collection = new TreeItem.Collection();
                 if (Array.isArray(json)) {
-                    json.forEach(itemToken => {
+                    json.forEach(str => {
+                        const itemToken = JSON.parse(str);
                         const id = itemToken['Id'];
                         const parentId = itemToken['ParentId'];
                         const childrenIds = itemToken['ChildrenIds'] || [];
@@ -159,6 +174,9 @@ var WebsocketTSClient;
                         treeItem.parentId = parentId;
                         treeItem.childrenIds = childrenIds;
                         collection.items.push(treeItem);
+                        if (parentId == null) {
+                            collection.topMostItems.push(treeItem);
+                        }
                     });
                 }
                 return collection;

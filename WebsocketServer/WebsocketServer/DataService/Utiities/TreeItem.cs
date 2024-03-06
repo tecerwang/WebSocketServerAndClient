@@ -9,6 +9,7 @@ namespace WebSocketServer.DataService.Utiities
     }
 
     /// <summary>
+    /// todo 这个类并非线程安全，需要进行修改
     /// 可以携带信息的树状数据结构,一对多结构
     /// </summary>
     /// <typeparam name="T"></typeparam>
