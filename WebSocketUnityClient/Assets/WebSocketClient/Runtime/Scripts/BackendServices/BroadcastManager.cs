@@ -86,14 +86,14 @@ namespace WebSocketClient
             await Task.CompletedTask;
         }
 
-        private void Singleton_OnBackendNotify(string serviceName, string cmd, JToken data)
+        private void Singleton_OnBackendNotify(NotifyPack not)
         {
-            if (serviceName == BroadcastManager.serviceName)
+            if (not.serviceName == BroadcastManager.serviceName)
             {
                 // 收到广播消息
-                if (cmd == BackendOps.Cmd_BroadcastMsg)
+                if (not.cmd == BackendOps.Cmd_BroadcastMsg)
                 {
-                    var msg = JHelper.GetJsonString(data, "msg");
+                    var msg = JHelper.GetJsonString(not.data, "msg");
                     Utility.LogDebug("BroadcastManager", $"recieve broadcasted msg {msg}");
                 }
             }

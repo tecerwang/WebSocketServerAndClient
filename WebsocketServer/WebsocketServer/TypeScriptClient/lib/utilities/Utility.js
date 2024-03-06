@@ -46,8 +46,10 @@ var WebsocketTSClient;
             return new Date(2000, 0, 1, hour, mins, secs);
         }
         static LogDebug(...data) {
-            if (IsDebugEnv) {
-                console.log(data);
+            if (IsDebugEnv && data.length > 0) {
+                var str = "";
+                data.forEach((d) => { str += d; });
+                console.log(str);
             }
         }
         static GenerateUniqueId() {

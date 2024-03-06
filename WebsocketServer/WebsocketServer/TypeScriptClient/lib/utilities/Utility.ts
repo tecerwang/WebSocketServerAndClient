@@ -54,13 +54,13 @@
             return new Date(2000, 0, 1, hour, mins, secs);
         }
 
-
-
         static LogDebug(...data: any[]): void
         {
-            if (IsDebugEnv)
+            if (IsDebugEnv && data.length > 0)
             {
-                console.log(data);
+                var str: string = "";
+                data.forEach((d) => { str += d });
+                console.log(str);
             }
         }
         static GenerateUniqueId(): string

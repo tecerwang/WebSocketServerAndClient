@@ -43,29 +43,21 @@ namespace WebSocketClient
 
         private bool _isInited = false;
 
+        private string _clientId;
+
         /// <summary>
         /// 实际负责收发的通讯代理
         /// </summary>
-        private WebSocketClientProxy _wsClientProxy;
+        private WebSocketClient _wsClient;
 
-        /// <summary>
-        /// 目前只负责网络心跳
-        /// </summary>
-        private ConnMonitor _monitor;
-
-        public void Init(string backendUrl)
+        public void Init(string url)
         {
             if (!_isInited)
             {
-                Utility.LogDebug("Backend", "Create ws client proxy Gameobject");
-                // 实例化一个 websocketclientproxy
-                var proxyObj = new GameObject("[WebSocketClientProxy]");
-                proxyObj.transform.parent = singleton.monoGameObject.transform;
-                _wsClientProxy = proxyObj.AddComponent<WebSocketClientProxy>();
-                _wsClientProxy.OnClientStateChanged += WsClientProxy_OnClientStateChanged;
-                _wsClientProxy.OnClientProxyRecievedMsg += WsClientProxy_OnClientProxyRecievedMsg;
-                _wsClientProxy.clientSubName = "wsClientSingleton";
-                _wsClientProxy.wsUrl = backendUrl;
+                _clientId = GetClientConnectionId();
+                _wsClient = new WebSocketClient(url + $"?clientId={_clientId}");
+                monoGameObject.StartCoroutine(HandleReceivedMsg());
+                _wsClient.OnClientStateChanged += OnClientStateChanged;           
                 _isInited = true;
             }
             else
@@ -74,22 +66,9 @@ namespace WebSocketClient
             }
         }
 
-        /// <summary>
-        /// 开始连接服务器
-        /// </summary>
-        /// <returns></returns>
-        public async Task Connect2ServerAsync()
+        private void OnClientStateChanged()
         {
-            Utility.LogDebug("Backend", "Connect to ws server start");
-            while (!await Connect2Server());
-            // 实例化连接监视器
-            _monitor = ConnMonitor.Create(this);
-            _monitor.Init();
-        }
-
-        private void WsClientProxy_OnClientStateChanged()
-        {
-            if (_wsClientProxy.State == WebSocketClient.ClientState.open)
+            if (_wsClient.State == WebSocketClient.ClientState.open)
             {
                 if (State != WSBackendState.Open)
                 {
@@ -107,56 +86,74 @@ namespace WebSocketClient
             }
         }
 
-        private async Task<bool> Connect2Server()
+        /// <summary>
+        /// 开始连接服务器
+        /// </summary>
+        /// <returns></returns>
+        public async Task Connect2ServerAsync()
         {
-            TaskCompletionSource<bool> completeSource = new TaskCompletionSource<bool>();
-            _wsClientProxy.Connect().onComplete = (isSuccessful) =>
+            while (Application.isPlaying)
             {
-                if (isSuccessful)
+                if (_wsClient.State == WebSocketClient.ClientState.close || _wsClient.State == WebSocketClient.ClientState.unkown)
                 {
-                    Utility.LogDebug("Backend", "connect to ws server end");
-                    completeSource.SetResult(true);
-                    WsClientProxy_OnClientStateChanged();
+                    // 如果连接成功，会阻塞线程
+                    await _wsClient.TryConnectAsync();
                 }
-                else
+                Utility.LogDebug("Backend", "connect to ws server fail,reconnect start after 1 sec");
+                await Task.Delay(1000);
+            }
+        }
+       
+        private IEnumerator HandleReceivedMsg()
+        {
+            while (true)
+            {
+                var data = _wsClient.GetCurrentRecievedDataFromQueue();
+                if (data != null)
                 {
-                    Utility.LogDebug("Backend", "connect to ws server fail,reconnect start");
-                    completeSource.SetResult(false);
+                    if (data.type == MsgPack.RequestType)
+                    {
+                        var request = (data as RequestPack);
+                        if (request != null)
+                        {
+                            OnBackendRequest?.Invoke(request);
+                        }
+                    }
+                    else if (data.type == MsgPack.ResponseType)
+                    {
+                        var response = (data as ResponsePack);
+                        if (response != null)
+                        {
+                            OnBackendResponse?.Invoke(response);
+                        }
+                    }
+                    else if (data.type == MsgPack.NotifyType)
+                    {
+                        var notify = (data as NotifyPack);
+                        if (notify != null)
+                        {
+                            OnBackendNotify?.Invoke(notify);
+                        }
+                    }
                 }
-            };
-            return await completeSource.Task;
+                yield return new WaitForEndOfFrame();
+            }
         }
 
-        private void WsClientProxy_OnClientProxyRecievedMsg(MsgPack data)
-        {
-            if (data.type == MsgPack.ResponseType)
-            {
-                var response = (data as ResponsePack);
-                if (response != null)
-                {
-                    int errCode = response.errCode;
-                    OnBackendResponse?.Invoke(data.serviceName, data.cmd, errCode, response.rid, data.data);
-                }
-            }
-            else if (data.type == MsgPack.NotifyType)
-            {
-                var notify = (data as NotifyPack);
-                if (notify != null)
-                {
-                    OnBackendNotify?.Invoke(data.serviceName, data.cmd, data.data);
-                }
-            }
-        }
+        /// <summary>
+        /// 收到 backend 请求消息 必须回执
+        /// </summary>
+        public event Action<RequestPack> OnBackendRequest;
 
         /// <summary>
         /// 收到 backend 回执消息
         /// </summary>
-        public event Action<string, string, int, int, JToken> OnBackendResponse;
+        public event Action<ResponsePack> OnBackendResponse;
 
         /// <summary>
         /// 收到 backend Notify
         /// </summary>
-        public event Action<string, string, JToken> OnBackendNotify;
+        public event Action<NotifyPack> OnBackendNotify;
 
         /// <summary>
         /// 向 backend 发送请求
@@ -165,13 +162,41 @@ namespace WebSocketClient
         /// <param name="cmd"></param>
         /// <param name="data"></param>
         /// <returns> rid (request id) </returns>
-        public WebSocketClientProxy.ProxyResult CreateBackendRequest(string serviceName, string cmd, JToken data)
+        public async Task<int> CreateBackendRequest(string serviceName, string cmd, JToken data)
         {
-            if (_wsClientProxy == null || _wsClientProxy.State != WebSocketClient.ClientState.open)
+            if (_wsClient != null && _wsClient.State == WebSocketClient.ClientState.open)
             {
-                return null;
-            }            
-            return _wsClientProxy.SendRequest(serviceName, cmd, data);
+                RequestPack requestPack = new RequestPack()
+                {
+                    rid = RequestPack.GetRequestId(),
+                    clientId = _clientId,
+                    cmd = cmd,
+                    data = data,
+                    serviceName = serviceName
+                };
+                var sendMsg = requestPack.ToString();
+                if (await _wsClient.SendMessageAsync(sendMsg))
+                {
+                    return requestPack.rid;
+                }
+               
+            }
+            return -1;
+        }
+
+        public async Task CloseAsync()
+        {
+            await _wsClient?.CloseAsync();
+        }
+
+        /// <summary>
+        /// 获取 clientId
+        /// </summary>
+        /// <param name="extroInfo"></param>
+        /// <returns></returns>
+        private static string GetClientConnectionId()
+        {
+            return SystemInfo.deviceType.ToString() + "_" + Utility.GetDeviceId();
         }
     }
 }

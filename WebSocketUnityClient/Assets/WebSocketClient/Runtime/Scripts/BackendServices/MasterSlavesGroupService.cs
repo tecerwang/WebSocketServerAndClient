@@ -133,14 +133,14 @@ namespace WebSocketClient
             }
         }
 
-        private void Singleton_OnBackendNotify(string serviceName, string cmd, JToken data)
+        private void Singleton_OnBackendNotify(NotifyPack not)
         {
-            if (serviceName == MasterSlavesGroupService.serviceName)
+            if (not.serviceName == MasterSlavesGroupService.serviceName)
             {
                 // master collectoion on server changed
-                if (cmd == BackendOps.Notify_OnMasterCollectionChanged)
+                if (not.cmd == BackendOps.Notify_OnMasterCollectionChanged)
                 {
-                    var masterClient=  MasterClient.Parse(data);
+                    var masterClient=  MasterClient.Parse(not.data);
                     if (masterClient != null)
                     {
                         Utility.LogDebug("MasterSlavesGroupService", "Notify Master Collection Changed", masterClient);
@@ -148,10 +148,10 @@ namespace WebSocketClient
                     }
                 }
                 // 收到别人发送的消息
-                else if (cmd == BackendOps.Cmd_Broadcast)
+                else if (not.cmd == BackendOps.Cmd_Broadcast)
                 {
-                    Utility.LogDebug("MasterSlavesGroupService", $"Recieved Broadcast msg {data}");
-                    OnRecievedBroadcast?.Invoke(data);
+                    Utility.LogDebug("MasterSlavesGroupService", $"Recieved Broadcast msg {not.data}");
+                    OnRecievedBroadcast?.Invoke(not.data);
                 }
             }
         }

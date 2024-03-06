@@ -31,6 +31,11 @@ namespace WebSocketClient
         private static TaskCompletionSource<bool> _waitForInitedAsyncTCS;
 
         /// <summary>
+        /// 目前只负责网络心跳
+        /// </summary>
+        private ConnMonitor _monitor;
+
+        /// <summary>
         /// 异步等待 backend manager 完成初始化
         /// </summary>
         /// <returns></returns>
@@ -50,7 +55,8 @@ namespace WebSocketClient
             DontDestroyOnLoad(gameObject);
 
             if (!IsInited && WSBackend.CreateSingleton(this))
-            {
+            {           
+
                 // 初始化一个 client proxy gameObject
                 WSBackend.singleton.Init(backendUrl);
 
@@ -59,6 +65,10 @@ namespace WebSocketClient
 
                 // 初始化所有 manager 完成后尝试连接 backend
                 await Task.WhenAll(managers.Select(p => p.Init()));
+
+                // 实例化连接监视器
+                _monitor = ConnMonitor.Create(WSBackend.singleton);
+                _monitor.Init();
 
                 // managers 初始化完成
                 IsInited = true;
@@ -102,6 +112,12 @@ namespace WebSocketClient
                 }
             }        
             return mgrRepo;
+        }       
+
+        private async void OnApplicationQuit()
+        {
+            await WSBackend.singleton?.CloseAsync();
+            //WebSocketClient.IsApplicationPlaying = false;
         }
     }
 }

@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
+using System.Threading;
+using UIFramework;
 
 namespace WebSocketClient
 {
@@ -14,14 +17,11 @@ namespace WebSocketClient
     {
         private const string serviceName = "ConnMonitorService";
 
-        /// <summary>
-        /// 最后一次成功通讯的时间，如果长时间没有通讯，负责发送网络心跳
-        /// </summary>
-        private float _lastestWSTick;
-
         private WSBackend _backend;
 
-        private Coroutine _monitorCoroutine;
+        private DateTime _lastCommunicateTime;
+
+        private const int _intervalMS = 2000;
 
         public void Init()
         {
@@ -37,60 +37,62 @@ namespace WebSocketClient
             _backend.OnBackendNotify -= Backend_OnBackendNotify;
         }
 
-        private void Backend_OnBackendResponse(string serviceName, string cmd, int errCode, int rid, JToken data)
+        private void Backend_OnBackendResponse(ResponsePack resp)
         {
-            _lastestWSTick = Time.realtimeSinceStartup;
+            _lastCommunicateTime = DateTime.Now;
         }
 
-        private void Backend_OnBackendNotify(string serviceName, string cmd, JToken data)
+        private void Backend_OnBackendNotify(NotifyPack not)
         {
-            _lastestWSTick = Time.realtimeSinceStartup;
+            _lastCommunicateTime = DateTime.Now;
         }
+
+        private CancellationTokenSource _heartBeatCTS;
 
         private void Singleton_OnBackendStateChanged()
         {
+            return;
             if (_backend.State == WSBackend.WSBackendState.Open)
             {
-                if (_monitorCoroutine != null)
+                _heartBeatCTS = new CancellationTokenSource();
+                _lastCommunicateTime = DateTime.Now;
+                Task.Run(async () =>
                 {
-                    _backend.monoGameObject.StopCoroutine(_monitorCoroutine);
-                }
-                _monitorCoroutine = _backend.monoGameObject.StartCoroutine(HeartbeatMonitor());
+                    Utility.LogDebug("ConnMonitor", "heart beat monitor start");
+                    while (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
+                    {
+                        var curTime = DateTime.Now;
+                        var curInterval = (curTime - _lastCommunicateTime).TotalMilliseconds;
+                        if (curInterval > _intervalMS * 2)
+                        {
+                            await WSBackend.singleton.CloseAsync();
+                            break;
+                        }
+                        else if (curInterval > _intervalMS)
+                        {
+                            await _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
+                            await Task.Delay(_intervalMS, _heartBeatCTS.Token);
+                        }
+                        else
+                        {
+                            await Task.Delay((int)(_intervalMS - curInterval), _heartBeatCTS.Token);
+                        }
+                        if (_backend.State == WSBackend.WSBackendState.Close)
+                        {
+                            break;
+                        }
+                    }
+                    Utility.LogDebug("ConnMonitor", "heart beat monitor end");
+                    await WSBackend.singleton.Connect2ServerAsync();
+                }, _heartBeatCTS.Token);
             }
             else
             {
-                if (_monitorCoroutine != null)
-                {
-                    _backend.monoGameObject.StopCoroutine(_monitorCoroutine);
-                    _monitorCoroutine = null;
-                }
+                _heartBeatCTS.Cancel();
+                _heartBeatCTS.Dispose();
+                Utility.LogDebug("ConnMonitor", "heart beat monitor cancel by ws close");
             }
         }
-
-        private IEnumerator HeartbeatMonitor()
-        {
-            _lastestWSTick = Time.realtimeSinceStartup;
-            while (true)
-            {
-                yield return new WaitForSeconds(0.1f);
-                if (_backend.State == WSBackend.WSBackendState.Close)
-                {
-                    yield break;
-                }
-                var curRealTime = Time.realtimeSinceStartup;
-                /// 5秒一次 wsping
-                if (curRealTime - _lastestWSTick > 5)
-                {
-                    _lastestWSTick = curRealTime;
-                    _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 网络心跳超时
-        /// </summary>
-        public event Action WSPingTimeout;
 
         public static ConnMonitor Create(WSBackend backend)
         {

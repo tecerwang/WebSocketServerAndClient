@@ -51,23 +51,22 @@ namespace WebSocketClient
             }
         }
 
-        private void Singleton_OnBackendResponse(string serviceName, string cmd, int errCode, int rid, JToken data)
+        private void Singleton_OnBackendResponse(ResponsePack response)
         {
             // 收到这个请求的回执
-            if (_rid > 0 && rid == _rid)
+            if (_rid > 0 && response.rid == _rid)
             {
-                _responseDel?.Invoke(errCode, data, _requestContext.context);
+                _responseDel?.Invoke(response.errCode, response.data, _requestContext.context);
                 Release();
             }
         }
 
-        private void Request(RequestContext context)
+        private async void Request(RequestContext context)
         {
-            if (_retryTimes < 0 || _retryCount < _retryTimes)
+            if (WSBackend.singleton.State == WSBackend.WSBackendState.Open &&(_retryTimes < 0 || _retryCount < _retryTimes))
             {
-                var result = WSBackend.singleton.CreateBackendRequest(context.serviceName, context.cmd, context.data);
+                _rid = await WSBackend.singleton.CreateBackendRequest(context.serviceName, context.cmd, context.data);
                 _retryCount++;
-                _rid = result == null ? -1 : result.rid;
             }
             else
             {

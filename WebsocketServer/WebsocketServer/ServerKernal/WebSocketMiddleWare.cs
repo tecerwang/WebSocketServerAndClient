@@ -52,13 +52,32 @@ namespace WebSocketServer.ServerKernal
                             }
                             /// 启动网络监听
                             await Task.Run(() => ProcessWebSocketRequest(connection));
+
                         }
                     }
                     else
                     {
                         // 如果没有client Id，则关闭这个链接
                         DebugLog.Print($"WebSocket connection will close, because of the invalid connection info");
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Connection closed", CancellationToken.None);
+                        try
+                        {
+                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Connection closed", CancellationToken.None);
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugLog.Print($"WebSocket close exception: " + ex.ToString());
+                        }
+                    }
+                    if (clientId != null)
+                    {
+                        // 客户端主动关闭连接，需要通知 logic 客户端移除
+                        if (_logicProviders != null)
+                        {
+                            Task.WaitAll(_logicProviders.Select(p => p.OnClientClose(clientId)).ToArray());
+                        }
+                        // 客户端移除
+                        await _wsData.RemoveConnection(clientId);
+                        DebugLog.Print($"WebSocket connection remove client connection with ID: {clientId}");
                     }
                 }
                 else
@@ -109,7 +128,8 @@ namespace WebSocketServer.ServerKernal
                                     {
                                         provider?.OnClientClose(connection.clientId);
                                     }
-                                }                               
+                                }
+                                await connection.webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
                                 connection.webSocket.Dispose();
                             }
                             break;
