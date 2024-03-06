@@ -76,7 +76,7 @@ namespace WebSocketClient
                 // ÈÃ WaitForInitedAsync ½áÊøµÈ´ý
                 _waitForInitedAsyncTCS?.SetResult(true);
 
-                await WSBackend.singleton.Connect2ServerAsync();
+                await WSBackend.singleton.ConnectAndRecvAsync();
             }
         }
 
@@ -116,8 +116,8 @@ namespace WebSocketClient
 
         private async void OnApplicationQuit()
         {
+            UIFramework.Utility.LogDebug("BackendManager", "Invoke close connection by application quit");
             await WSBackend.singleton?.CloseAsync();
-            //WebSocketClient.IsApplicationPlaying = false;
         }
     }
 }

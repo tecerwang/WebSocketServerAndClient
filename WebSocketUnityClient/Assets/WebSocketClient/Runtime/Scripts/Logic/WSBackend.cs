@@ -90,50 +90,60 @@ namespace WebSocketClient
         /// 开始连接服务器
         /// </summary>
         /// <returns></returns>
-        public async Task Connect2ServerAsync()
+        public async Task ConnectAndRecvAsync()
         {
             while (Application.isPlaying)
             {
-                if (_wsClient.State == WebSocketClient.ClientState.close || _wsClient.State == WebSocketClient.ClientState.unkown)
-                {
-                    // 如果连接成功，会阻塞线程
-                    await _wsClient.TryConnectAsync();
-                }
-                Utility.LogDebug("Backend", "connect to ws server fail,reconnect start after 1 sec");
+                // 如果连接成功，会阻塞线程
+                await _wsClient.ConnectAndRecvAsync();
+                Utility.LogDebug("Backend", "connect to ws server fail, reconnect start after 1 sec", _wsClient.State);
                 await Task.Delay(1000);
             }
+
+            Utility.LogDebug("Backend", "Reconnect stop by app exit", _wsClient.State);
         }
        
         private IEnumerator HandleReceivedMsg()
-        {
+        {         
             while (true)
             {
-                var data = _wsClient.GetCurrentRecievedDataFromQueue();
-                if (data != null)
+                foreach (var receivedMessage in _wsClient.GetCurrentRecievedDataFromQueue())
                 {
-                    if (data.type == MsgPack.RequestType)
+                    var data = JObject.Parse(receivedMessage);
+                    if (data == null)
                     {
-                        var request = (data as RequestPack);
-                        if (request != null)
+                        continue;
+                    }
+                    var pack = MsgPack.Parse(data);
+                    if (pack != null)
+                    {
+                        switch (pack.type)
                         {
-                            OnBackendRequest?.Invoke(request);
+                            case MsgPack.RequestType:
+                                if (pack is RequestPack request)
+                                {
+                                    OnBackendRequest?.Invoke(request);
+                                }
+                                break;
+                            case MsgPack.ResponseType:
+                                if (pack is ResponsePack response)
+                                {
+                                    OnBackendResponse?.Invoke(response);
+                                }
+                                break;
+                            case MsgPack.NotifyType:
+                                if (pack is NotifyPack notify)
+                                {
+                                    OnBackendNotify?.Invoke(notify);
+                                }
+                                break;
+                            default:
+                                break;
                         }
                     }
-                    else if (data.type == MsgPack.ResponseType)
+                    else
                     {
-                        var response = (data as ResponsePack);
-                        if (response != null)
-                        {
-                            OnBackendResponse?.Invoke(response);
-                        }
-                    }
-                    else if (data.type == MsgPack.NotifyType)
-                    {
-                        var notify = (data as NotifyPack);
-                        if (notify != null)
-                        {
-                            OnBackendNotify?.Invoke(notify);
-                        }
+                        Utility.LogInternalDebug($"[WebSocket Client] Received message from server: {receivedMessage} Deserialize fail");
                     }
                 }
                 yield return new WaitForEndOfFrame();
@@ -155,6 +165,12 @@ namespace WebSocketClient
         /// </summary>
         public event Action<NotifyPack> OnBackendNotify;
 
+        public class BackendRequestResult
+        {
+            public WebSocketClient.SendMsgState state;
+            public int rid;
+        }
+
         /// <summary>
         /// 向 backend 发送请求
         /// </summary>
@@ -162,7 +178,7 @@ namespace WebSocketClient
         /// <param name="cmd"></param>
         /// <param name="data"></param>
         /// <returns> rid (request id) </returns>
-        public async Task<int> CreateBackendRequest(string serviceName, string cmd, JToken data)
+        public async Task<BackendRequestResult> CreateBackendRequest(string serviceName, string cmd, JToken data)
         {
             if (_wsClient != null && _wsClient.State == WebSocketClient.ClientState.open)
             {
@@ -175,18 +191,23 @@ namespace WebSocketClient
                     serviceName = serviceName
                 };
                 var sendMsg = requestPack.ToString();
-                if (await _wsClient.SendMessageAsync(sendMsg))
+                var state = await _wsClient.SendMessageAsync(sendMsg);
+                return new BackendRequestResult()
                 {
-                    return requestPack.rid;
-                }
-               
+                    state = state,
+                    rid = requestPack.rid
+                };
             }
-            return -1;
+            return new BackendRequestResult()
+            {
+                state = WebSocketClient.SendMsgState.Unkown,
+                rid = -1
+            };
         }
 
         public async Task CloseAsync()
         {
-            await _wsClient?.CloseAsync();
+             await _wsClient?.CloseAsync();
         }
 
         /// <summary>

@@ -8,7 +8,9 @@ namespace WebSocketClient
 {
     public static class ErrCode
     {
-        public static int Internal_RetryTimesOut = -1000;
+        public static int Internal_Error = -1000;
+        public static int Internal_RetryTimeout = -1001;
+        public static int Internal_ConnectionClose = -1002;
 
         public static int Unkown = -100;
 

@@ -121,7 +121,8 @@ namespace WebSocketClient
                     groupId = _groupId,
                     clientName = _clientName
                 };
-                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_JoinGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
+                _isQuarying = true;
+                BackendRequest.Create(serviceName, BackendOps.Cmd_JoinGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
             }
         }
 
@@ -137,7 +138,8 @@ namespace WebSocketClient
                     groupId = _groupId,
                     clientName = _clientName
                 };
-                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_LeaveGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
+                _isQuarying = true;
+                BackendRequest.Create(serviceName, BackendOps.Cmd_LeaveGroup, rdata.ToJson(), null, OnJoinOrLeaveGroupResponse);
             }
         }
 
@@ -168,7 +170,8 @@ namespace WebSocketClient
                     clientName = _clientName,
                     msg = msg
                 };
-                _isQuarying = BackendRequest.CreateRetry(serviceName, BackendOps.Cmd_BroadcastMsg, rdata.ToJson(), null, OnBroadcastResponse);
+                _isQuarying = true;
+                BackendRequest.Create(serviceName, BackendOps.Cmd_BroadcastMsg, rdata.ToJson(), null, OnBroadcastResponse);
             }
         }
 

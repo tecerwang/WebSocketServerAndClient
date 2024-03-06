@@ -52,7 +52,6 @@ namespace WebSocketServer.ServerKernal
                             }
                             /// 启动网络监听
                             await Task.Run(() => ProcessWebSocketRequest(connection));
-
                         }
                     }
                     else

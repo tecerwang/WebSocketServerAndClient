@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UIFramework;
 using UnityEngine;
 
@@ -32,52 +33,56 @@ namespace WebSocketClient
         /// 默认为 -1，代表未发起有效请求
         /// </summary>
         private int _rid = -1;
-        private int _retryTimes;
-
-        private int _retryCount = 0;
 
         private BackendRequest()
         {
-            WSBackend.singleton.OnBackendStateChanged += Singleton_OnBackendStateChanged;
             WSBackend.singleton.OnBackendResponse += Singleton_OnBackendResponse;
-        }
-
-        private void Singleton_OnBackendStateChanged()
-        {
-            // rid < 0，说明之前请求没有成功
-            if (_rid < 0 && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
-            {
-                Request(_requestContext);
-            }
         }
 
         private void Singleton_OnBackendResponse(ResponsePack response)
         {
             // 收到这个请求的回执
-            if (_rid > 0 && response.rid == _rid)
+            if (response.rid == _rid)
             {
                 _responseDel?.Invoke(response.errCode, response.data, _requestContext.context);
                 Release();
             }
         }
 
-        private async void Request(RequestContext context)
+        private async Task<bool> Request(RequestContext context)
         {
-            if (WSBackend.singleton.State == WSBackend.WSBackendState.Open &&(_retryTimes < 0 || _retryCount < _retryTimes))
+            var errCode = ErrCode.Internal_Error;
+            if (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
-                _rid = await WSBackend.singleton.CreateBackendRequest(context.serviceName, context.cmd, context.data);
-                _retryCount++;
+                var result = await WSBackend.singleton.CreateBackendRequest(context.serviceName, context.cmd, context.data);
+                if (result.state == WebSocketClient.SendMsgState.Sent)
+                {
+                    _rid = result.rid;
+                    /// 如果消息发出 等待回执
+                    return await Task.FromResult(true);
+                }
+
+                switch (result.state)
+                {
+                    case WebSocketClient.SendMsgState.Timeout:
+                        {
+                            errCode = ErrCode.Internal_RetryTimeout;
+                            break;
+                        }
+                    case WebSocketClient.SendMsgState.InteruptByConnectionClose:
+                        {
+                            errCode = ErrCode.Internal_ConnectionClose;
+                            break;
+                        }
+                }
             }
-            else
-            {
-                _responseDel?.Invoke(ErrCode.Internal_RetryTimesOut, null, _requestContext.context);
-                Release();
-            }
+            _responseDel?.Invoke(errCode, null, _requestContext.context);
+            Release();
+            return await Task.FromResult(false);
         }
 
         private void Release()
         {
-            WSBackend.singleton.OnBackendStateChanged -= Singleton_OnBackendStateChanged;
             WSBackend.singleton.OnBackendResponse -= Singleton_OnBackendResponse;
         }
 
@@ -90,14 +95,13 @@ namespace WebSocketClient
         /// <param name="onResponse"></param>
         /// <param name="retryTimes">重试次数, -1 一直重试</param>
         /// <returns></returns>
-        public static bool CreateRetry(string serviceName, string cmd, JToken data, object context, OnResponse onResponse, int retryTimes = -1)
+        public static void Create(string serviceName, string cmd, JToken data, object context, OnResponse onResponse)
         {
             /// 没有创建 backend 单例
             if (WSBackend.singleton != null && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 BackendRequest request = new BackendRequest();
                 request._responseDel = onResponse;
-                request._retryTimes = retryTimes;
                 request._requestContext = new RequestContext()
                 {
                     serviceName = serviceName,
@@ -107,8 +111,8 @@ namespace WebSocketClient
                 };
                 try
                 {
-                    request.Request(request._requestContext);
-                    return true;
+                    _= request.Request(request._requestContext);
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -117,8 +121,7 @@ namespace WebSocketClient
                     request.Release();
                 }
             }
-            onResponse?.Invoke(ErrCode.Internal_RetryTimesOut, null, context);
-            return false;
+            onResponse?.Invoke(ErrCode.Internal_ConnectionClose, null, context);
         }
     }
 }
