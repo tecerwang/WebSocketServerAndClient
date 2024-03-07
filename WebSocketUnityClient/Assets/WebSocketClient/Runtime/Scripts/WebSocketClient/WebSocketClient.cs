@@ -139,13 +139,13 @@ namespace WebSocketClient
             }
             catch (WebSocketException wsEx) // Catching only WebSocketException
             {
-                Utility.LogExpection("[WebSocket Client] WebSocketException occurred: " + wsEx.Message);
+                Utility.LogException("[WebSocket Client] WebSocketException occurred: " + wsEx.Message);
                 _clientWS.Dispose();
                 UpdateClientState(ClientState.close);
             }
             catch (Exception ex)
             {
-                Utility.LogExpection("[WebSocket Client] tryConnect exception: " + ex.Message);
+                Utility.LogException("[WebSocket Client] tryConnect exception: " + ex.Message);
                 await CloseAsync();
             }
             finally
@@ -230,14 +230,14 @@ namespace WebSocketClient
             }
             catch (WebSocketException wsEx) // Catching only WebSocketException
             {
-                Utility.LogExpection("[WebSocket Client] WebSocketException occurred: " + wsEx.Message);
+                Utility.LogException("[WebSocket Client] WebSocketException occurred: " + wsEx.Message);
                 _clientWS.Dispose();
                 UpdateClientState(ClientState.close);
             }
             catch (Exception ex)
             {              
                 await CloseAsync();
-                Utility.LogExpection(ex);
+                Utility.LogException(ex);
             }
         }
 
@@ -289,7 +289,7 @@ namespace WebSocketClient
                     }
                     catch (Exception ex)
                     {
-                        Utility.LogExpection("WebSocketClient", $"State : {state}, Exception : {ex}");
+                        Utility.LogException("WebSocketClient", $"State : {state}, Exception : {ex}");
                     }
                     return;
 
@@ -365,7 +365,7 @@ namespace WebSocketClient
                 catch (WebSocketException ex)
                 {
                     result = SendMsgState.ThrowException;
-                    Utility.LogExpection("[WebSocket Client] SendMessage exception : ", ex.ToString());
+                    Utility.LogException("[WebSocket Client] SendMessage exception : ", ex.ToString());
                     // doc :
                     //"ConnectionClosedPrematurely" in the context of WebSocket communication typically means that the WebSocket connection was closed unexpectedly before the expected
                     //closing handshake was completed. In WebSocket communication, both the client and server are supposed to perform a closing handshake to properly terminate the

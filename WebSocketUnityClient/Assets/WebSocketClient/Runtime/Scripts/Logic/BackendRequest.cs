@@ -117,7 +117,7 @@ namespace WebSocketClient
                 catch (Exception ex)
                 {
                     // 如果出错需要释放掉这个 request
-                    Utility.LogExpection(ex.ToString());
+                    Utility.LogException(ex.ToString());
                     request.Release();
                 }
             }

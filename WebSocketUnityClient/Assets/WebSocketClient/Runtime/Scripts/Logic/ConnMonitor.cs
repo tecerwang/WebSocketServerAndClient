@@ -72,7 +72,7 @@ namespace WebSocketClient
                     }
 
                     // Send ping
-                    Utility.LogDebug("ConnMonitor", "send wsping");
+                    Utility.LogInternalDebug("ConnMonitor", "send wsping");
                     await _backend.CreateBackendRequest(serviceName, BackendOps.WSPing, null);
                 }
             });
