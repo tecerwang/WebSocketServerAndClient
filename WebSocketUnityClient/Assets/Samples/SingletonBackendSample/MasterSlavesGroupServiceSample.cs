@@ -25,10 +25,12 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
     async void Start()
     {
         Utility.logLevel = Utility.LogLevel.Internal;
+        if (!await BackendManager.Init(BackendManager.defaultBackendUrl, BackendManager.defaultClientId))
+        {
+            return;
+        }
 
-        await BackendManager.WaitForInitAsync();
-
-        inputMasterName.text = BackendManager.singleton.clientName;
+        inputMasterName.text = BackendManager.defaultClientId;
 
         ResetUIState();
 
@@ -114,8 +116,11 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         if (WSBackend.singleton.State == WSBackend.WSBackendState.Open)
         {
             BackendManager.singleton.msGroupManager.RegisterAsListener();
-        }       
-        ResetUIState();
+        }
+        if (Application.isPlaying)
+        {
+            ResetUIState();
+        }
     }
 
     private void Click_RegisterAsMaster()

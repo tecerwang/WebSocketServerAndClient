@@ -18,19 +18,15 @@ namespace WebSocketClient
         public MasterSlavesGroupService msGroupManager { get; private set; }
         #endregion
 
-        public static BackendManager singleton; 
+        public static BackendManager singleton;
 
-        public bool IsInited { get; private set; } = false;
+        private bool _isInited = false;
 
         public WSBackend.WSBackendState wsState => WSBackend.singleton.State;
 
-        private const string defaultBackendUrl = "ws://localhost:8080/ws";
+        public const string defaultBackendUrl = "ws://localhost:8080/ws";
 
-        public string backendUrl = defaultBackendUrl;
-
-        private const string defaultClientName = "Unity";
-
-        public string clientName = defaultClientName;
+        public const string defaultClientId = "Unity";
 
         private static TaskCompletionSource<bool> _waitForInitedAsyncTCS;
 
@@ -44,8 +40,8 @@ namespace WebSocketClient
         /// </summary>
         /// <returns></returns>
         public static async Task WaitForInitAsync()
-        { 
-            if(singleton != null &&  singleton.IsInited)
+        {
+            if (singleton != null && singleton._isInited)
             {
                 return;
             }
@@ -53,35 +49,45 @@ namespace WebSocketClient
             await _waitForInitedAsyncTCS.Task;
         }
 
-        private async void Awake()
+        // 初始化 backend
+        public async static Task<bool> Init(string backendUrl, string clientId)
         {
-            singleton = this;
+            if (BackendManager.singleton != null)
+            {
+                return false;
+            }
+
+            TaskCompletionSource<bool> completeSource = new TaskCompletionSource<bool>();
+            var gameObject = new GameObject();
+            gameObject.name = "[BackendManager]";
             DontDestroyOnLoad(gameObject);
+            singleton = gameObject.AddComponent<BackendManager>();
 
-            if (!IsInited && WSBackend.CreateSingleton(this))
-            {           
-
-                // 初始化一个 client proxy gameObject
-                WSBackend.singleton.Init(backendUrl, clientName);
+            if (WSBackend.CreateSingleton(singleton))
+            {
+                // 初始化一个 wsBackend
+                WSBackend.singleton.Init(backendUrl, clientId);
 
                 // 生成 manager instance
-                var managers = InitServiceManagerRefs();
+                var managers = singleton.InitServiceManagerRefs();
 
                 // 初始化所有 manager 完成后尝试连接 backend
                 await Task.WhenAll(managers.Select(p => p.Init()));
 
                 // 实例化连接监视器
-                _monitor = ConnMonitor.Create(WSBackend.singleton);
-                _monitor.Init();
+                singleton._monitor = ConnMonitor.Create(WSBackend.singleton);
+                singleton._monitor.Init();
 
                 // managers 初始化完成
-                IsInited = true;
+                singleton._isInited = true;
 
                 // 让 WaitForInitedAsync 结束等待
                 _waitForInitedAsyncTCS?.SetResult(true);
 
-                await WSBackend.singleton.ConnectAndRecvAsync();
+                _= WSBackend.singleton.ConnectAndRecvAsync();
+                return true;
             }
+            return false;
         }
 
         /// <summary>
@@ -114,9 +120,9 @@ namespace WebSocketClient
                         Utility.LogDebug("BackendManager", $"intatiate {propertyType.Name}");
                     }
                 }
-            }        
+            }
             return mgrRepo;
-        }       
+        }
 
         private async void OnApplicationQuit()
         {

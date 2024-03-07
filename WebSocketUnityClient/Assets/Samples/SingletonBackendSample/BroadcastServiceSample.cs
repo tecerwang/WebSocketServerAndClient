@@ -12,20 +12,14 @@ public class BroadcastServiceSample : MonoBehaviour
     public InputField InputBroadcastContent;
 
     // Start is called before the first frame update
-    void Start()
+    async void Awake()
     {
-        StartCoroutine(WaitLogicManagerInitComplete());
-    }
-
-    private IEnumerator WaitLogicManagerInitComplete()
-    {
-        while (BackendManager.singleton == null || !BackendManager.singleton.IsInited)
+        if (await BackendManager.Init(BackendManager.defaultBackendUrl, BackendManager.defaultClientId))
         {
-            yield return new WaitForEndOfFrame();
+            BtnJoinInGroup.onClick.AddListener(ClickBtnJoinInGroup);
+            BtnLeaveGroup.onClick.AddListener(ClickBtnLeaveGroup);
+            BtnBroadcastMsg.onClick.AddListener(ClickBtnBroadcastMsg);
         }
-        BtnJoinInGroup.onClick.AddListener(ClickBtnJoinInGroup);
-        BtnLeaveGroup.onClick.AddListener(ClickBtnLeaveGroup);
-        BtnBroadcastMsg.onClick.AddListener(ClickBtnBroadcastMsg);
     }
 
     // Update is called once per frame
@@ -74,8 +68,7 @@ public class BroadcastServiceSample : MonoBehaviour
 
     private bool IsBackendAvaliable()
     {
-        return BackendManager.singleton != null 
-            && BackendManager.singleton.IsInited 
+        return BackendManager.singleton != null
             && BackendManager.singleton.wsState == WSBackend.WSBackendState.Open;
     }
 
