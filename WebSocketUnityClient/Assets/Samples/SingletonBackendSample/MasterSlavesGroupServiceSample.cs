@@ -25,7 +25,11 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
     async void Start()
     {
         Utility.logLevel = Utility.LogLevel.Internal;
-        if (!await BackendManager.Init(BackendManager.defaultBackendUrl, BackendManager.defaultClientId))
+        //if (!await BackendManager.Init(BackendManager.defaultBackendUrl, BackendManager.defaultClientId))
+        //{
+        //    return;
+        //}
+        if (!await BackendManager.Init("ws://shanxi.jeosun.cn:8080/ws", BackendManager.defaultClientId))
         {
             return;
         }
@@ -127,12 +131,15 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
     {
         // 创建一个菜单树
         var collection = CreateMasterMenuData();
+       
         Utility.LogDebug("MasterSlavesGroupServiceSample", "CreateMasterData", collection.ToJson());
 
         string masterName = inputMasterName.text;
         if (!string.IsNullOrEmpty(masterName))
         {
-            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName, collection.ToJson());
+            var obj = new JObject();
+            obj.Add("menuCollection", collection.ToJson());
+            BackendManager.singleton.msGroupManager.RegisterAsMaster(masterName, -1, obj);
             ResetUIState();
         }
     }

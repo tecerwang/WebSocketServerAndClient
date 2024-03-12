@@ -53,7 +53,7 @@ var WebsocketTSClient;
                 document.getElementById('registerSlaveBtn').addEventListener('click', () => {
                     const masterId = document.getElementById('inputMasterId').value;
                     if (masterId) {
-                        service.RegisterAsSlave(new WebsocketTSClient.MasterClient(masterId, "tempName", true));
+                        service.RegisterAsSlave(new WebsocketTSClient.MasterClient(masterId, -1, "tempName", true));
                     }
                 });
                 document.getElementById('unRegisterSlaveBtn').addEventListener('click', () => {

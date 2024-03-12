@@ -45,7 +45,10 @@ var HTMLClient;
         init() {
             return __awaiter(this, void 0, void 0, function* () {
                 //const backendUrl = 'ws://localhost:8080/ws';
-                const backendUrl = 'ws://' + window.location.hostname + ':8080/ws';
+                var backendUrl = 'ws://' + window.location.hostname + ':8080/ws';
+                if (window.location.hostname == null || window.location.hostname == "") {
+                    backendUrl = 'ws://shanxi.jeosun.cn:8080/ws';
+                }
                 Utility.LogDebug("[MainPageController]", "Create singleton backend start");
                 if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl)) {
                     Utility.LogDebug("[MainPageController]", "Create singleton backend end");
@@ -110,7 +113,7 @@ var HTMLClient;
             Utility.LogDebug("[MainPageController]", "RegisteredAsSlave", errCode);
             if (errCode === ErrCode.OK) {
                 this.masterClientId = master.clientId;
-                this.mainPage.SetupMenus(master.masterName, data);
+                this.mainPage.SetupMenus(master.masterName, data.menuCollection);
             }
         }
         handleUnregisteredFromSlave(errCode) {

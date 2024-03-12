@@ -24,7 +24,7 @@ namespace WebSocketServer.ServiceLogic
         {
             public required string clientId;
             public required string masterName;
-
+            public required int displayIndex;
             public JToken? masterData;
 
             public override int GetHashCode()
@@ -36,6 +36,7 @@ namespace WebSocketServer.ServiceLogic
             {
                 return JHelper.MakeData(
                     "clientId", clientId,
+                    "displayIndex", displayIndex,
                     "masterName", masterName,
                     "isOnline", isOnline);
             }
@@ -197,6 +198,8 @@ namespace WebSocketServer.ServiceLogic
                 await CreateResponseToClient(pack, null, ErrCode.MasterNameIsNull);
                 return;
             }
+            var displayIndex = JHelper.GetJsonInt(pack.data, "displayIndex", -1);
+
             var master = await dataProvider.GetMasterByClientId(clientId);
             if (master != null)
             {
@@ -206,7 +209,7 @@ namespace WebSocketServer.ServiceLogic
             else
             {
                 var masterData = JHelper.GetJsonToken(pack.data, "masterData");
-                master = new MasterClient() { clientId = clientId, masterName = masterName, masterData = masterData };
+                master = new MasterClient() { clientId = clientId, masterName = masterName, displayIndex = displayIndex, masterData = masterData };
                 if (await dataProvider.RegisterMaster(master))
                 {
                     await Send_MasterChanged_2_Listenrs(dataProvider, master, true);

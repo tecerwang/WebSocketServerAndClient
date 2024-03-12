@@ -10,12 +10,14 @@
     export class MasterClient
     {
         public clientId: string;
+        public displayIndex: number;
         public masterName: string;
         public isOnline: boolean;        
 
-        constructor(clientId: string, masterName: string, isOnline: boolean)
+        constructor(clientId: string, displayIndex: number, masterName: string, isOnline: boolean)
         {
             this.clientId = clientId;
+            this.displayIndex = displayIndex;
             this.masterName = masterName;
             this.isOnline = isOnline;
         }
@@ -28,6 +30,7 @@
             }
 
             const clientId = json.clientId;
+            const displayIndex = json.displayIndex;
             const masterName = json.masterName;
             const isOnline = json.isOnline;
 
@@ -36,7 +39,7 @@
                 return null;
             }
 
-            return new MasterClient(clientId, masterName, isOnline);
+            return new MasterClient(clientId, displayIndex, masterName, isOnline);
         }
 
         public toString(): string

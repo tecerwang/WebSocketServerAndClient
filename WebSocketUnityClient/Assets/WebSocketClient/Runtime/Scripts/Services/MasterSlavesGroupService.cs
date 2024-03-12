@@ -200,7 +200,7 @@ namespace WebSocketClient
         /// 注册本机作为 master
         /// </summary>
         /// <param name="masterName"></param>
-        public async void RegisterAsMaster(string masterName, JToken masterData)
+        public async void RegisterAsMaster(string masterName, int displayIndex, JToken masterData)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
@@ -208,6 +208,7 @@ namespace WebSocketClient
                 clientState = ClientState.IsMaster;
                 JObject data = new JObject();
                 data.Add("masterName", masterName);
+                data.Add("displayIndex", displayIndex);
                 data.Add("masterData", masterData);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster Begin");
                 using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsMaster, data))

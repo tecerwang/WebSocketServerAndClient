@@ -7,8 +7,9 @@ var WebsocketTSClient;
         MasterSlavesGroupServiceState[MasterSlavesGroupServiceState["IsSlave"] = 2] = "IsSlave";
     })(MasterSlavesGroupServiceState = WebsocketTSClient.MasterSlavesGroupServiceState || (WebsocketTSClient.MasterSlavesGroupServiceState = {}));
     class MasterClient {
-        constructor(clientId, masterName, isOnline) {
+        constructor(clientId, displayIndex, masterName, isOnline) {
             this.clientId = clientId;
+            this.displayIndex = displayIndex;
             this.masterName = masterName;
             this.isOnline = isOnline;
         }
@@ -17,12 +18,13 @@ var WebsocketTSClient;
                 return null;
             }
             const clientId = json.clientId;
+            const displayIndex = json.displayIndex;
             const masterName = json.masterName;
             const isOnline = json.isOnline;
             if (typeof clientId !== 'string' || typeof masterName !== 'string' || typeof isOnline !== 'boolean') {
                 return null;
             }
-            return new MasterClient(clientId, masterName, isOnline);
+            return new MasterClient(clientId, displayIndex, masterName, isOnline);
         }
         toString() {
             return `masterName: ${this.masterName}, isOnline: ${this.isOnline}, clientId: ${this.clientId}`;

@@ -99,11 +99,26 @@ var HTMLClient;
             const button = document.createElement('button');
             button.textContent = master.masterName;
             button.id = "masterBtn_" + master.clientId;
+            button.setAttribute("displayIndex", master.displayIndex.toString());
             button.classList.add('btnMaster');
             button.addEventListener('click', () => {
                 this.OnMasterBtnClick.Trigger(master, button);
             });
-            this.mastersBtnPanel.appendChild(button);
+            let insertIndex = 0;
+            for (let i = 0; i < this.mastersBtnPanel.children.length; i++) {
+                const child = this.mastersBtnPanel.children[i];
+                const childDisplayIndex = parseInt(child.getAttribute('displayIndex') || '0');
+                if (childDisplayIndex > master.displayIndex) {
+                    insertIndex = i;
+                    break;
+                }
+                else {
+                    insertIndex = i + 1;
+                }
+            }
+            // Insert the button at the correct position
+            const nextSibling = this.mastersBtnPanel.children[insertIndex];
+            this.mastersBtnPanel.insertBefore(button, nextSibling);
         }
         RemoveBtn(btn) {
             this.mastersBtnPanel.removeChild(btn);
