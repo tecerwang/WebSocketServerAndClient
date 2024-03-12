@@ -160,18 +160,19 @@ namespace WebSocketClient
         /// 注册本机作为 Listenr
         /// </summary>
         /// <param name="masterName"></param>
-        public void RegisterAsListener()
+        public async void RegisterAsListener()
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsListener Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_RegisterAsListener, null, null, 
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        Utility.LogDebug("MasterSlavesGroupService", "RegisterAsListener End", errCode);
-                        OnRegisterAsListener?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsListener, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    OnRegisterAsListener?.Invoke(resp.errCode);
+                    Utility.LogDebug("MasterSlavesGroupService", "RegisterAsListener End", resp.errCode);                    
+                }
             }
         }
 
@@ -179,18 +180,19 @@ namespace WebSocketClient
         /// 注销 Listenr
         /// </summary>
         /// <param name="masterName"></param>
-        public void UnregisterFromListener()
+        public async void UnregisterFromListener()
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromListener Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_RegisterAsListener, null, null,
-                    (int errCode, JToken data, object context) => {
-                        _isQuarying = false;
-                        Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromListener End", errCode);
-                        OnUnregisteredFromListener?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_UnregisterFromListener, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    OnUnregisteredFromListener?.Invoke(resp.errCode);
+                    Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromListener End", resp.errCode);
+                }
             }
         }
 
@@ -198,7 +200,7 @@ namespace WebSocketClient
         /// 注册本机作为 master
         /// </summary>
         /// <param name="masterName"></param>
-        public void RegisterAsMaster(string masterName, JToken masterData)
+        public async void RegisterAsMaster(string masterName, JToken masterData)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
@@ -208,39 +210,40 @@ namespace WebSocketClient
                 data.Add("masterName", masterName);
                 data.Add("masterData", masterData);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_RegisterAsMaster, data, null,
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        clientState = errCode == ErrCode.OK ? ClientState.IsMaster : ClientState.Idle;
-                        Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster End", errCode);
-                        OnRegisteredAsMaster?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsMaster, data))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    OnRegisteredAsMaster?.Invoke(resp.errCode);
+                    Utility.LogDebug("MasterSlavesGroupService", "RegisterAsMaster End", resp.errCode);
+                }
             }
         }
 
         /// <summary>
         /// 注销本机作为 master
         /// </summary>
-        public void UnRegisterFromMaster()
+        public async void UnRegisterFromMaster()
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "UnRegisterFromMaster Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_UnregisterFromMaster, null, null,
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        clientState = errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsMaster;
-                        Utility.LogDebug("MasterSlavesGroupService", "UnRegisterFromMaster End", errCode);
-                        OnUnregisteredFromMaster?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_UnregisterFromMaster, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    clientState = resp.errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsMaster;
+                    OnUnregisteredFromMaster?.Invoke(resp.errCode);
+                    Utility.LogDebug("MasterSlavesGroupService", "UnRegisterFromMaster End", resp.errCode);
+                }
             }
         }
 
         /// <summary>
         /// 注册本机作为 slave
         /// </summary>
-        public void RegisterAsSlave(string masterId)
+        public async void RegisterAsSlave(string masterId)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
@@ -249,72 +252,76 @@ namespace WebSocketClient
                 JObject data = new JObject();
                 data.Add("masterId", masterId);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_RegisterAsSlave, data, null,
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        clientState = errCode == ErrCode.OK ? ClientState.IsSlave : ClientState.Idle;
-                        Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave End", errCode);
-                        OnRegisteredAsSlave?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsSlave, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    clientState = resp.errCode == ErrCode.OK ? ClientState.IsSlave : ClientState.Idle;
+                    OnRegisteredAsSlave?.Invoke(resp.errCode);
+                    Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave End", resp.errCode);
+                }
             }
         }
 
-        public void UnregisterFromSlave()
+        public async void UnregisterFromSlave()
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromSlave Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_UnregisterFromSlave, null, null,
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        clientState = errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsSlave;
-                        Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromSlave End", errCode);
-                        OnUnregisteredFromSlave?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_UnregisterFromSlave, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    clientState = resp.errCode == ErrCode.OK ? ClientState.Idle : ClientState.IsSlave;
+                    Utility.LogDebug("MasterSlavesGroupService", "UnregisterFromSlave End", resp. errCode);
+                    OnUnregisteredFromSlave?.Invoke(resp.errCode);
+                }
             }
         }
 
-        public void GetAllMasters()
+        public async void GetAllMasters()
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_GetAllMasters, null, null, 
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        List<MasterClient> list = new List<MasterClient>();
-                        var arr = JHelper.GetJsonArray(data, "masters");
-                        if (data != null)
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_GetAllMasters, null))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    List<MasterClient> list = new List<MasterClient>();
+                    var arr = JHelper.GetJsonArray(resp.data, "masters");
+                    if (arr != null)
+                    {
+                        foreach (var d in arr)
                         {
-                            foreach (var d in arr)
+                            var master = MasterClient.Parse(d);
+                            if (master != null)
                             {
-                                var master = MasterClient.Parse(d);
-                                if (master != null)
-                                {
-                                    list.Add(master);
-                                }
+                                list.Add(master);
                             }
                         }
-                        Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters End", $"Get {list.Count} masters");
-                        OnGetAllMasters?.Invoke(errCode, list);
-                    });
+                    }
+                    Utility.LogDebug("MasterSlavesGroupService", "GetAllMasters End", $"Get {list.Count} masters");
+                    OnGetAllMasters?.Invoke(resp.errCode, list);
+                }                
             }
         }
 
-        public void Broadcast(JToken data)
+        public async void Broadcast(JToken data)
         {
             if (!_isQuarying && WSBackend.singleton.State == WSBackend.WSBackendState.Open)
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "Broadcast Begin");
-                BackendRequest.Create(serviceName, BackendOps.Cmd_Broadcast, data, null,
-                    (int errCode, JToken data, object context)=> {
-                        _isQuarying = false;
-                        Utility.LogDebug("MasterSlavesGroupService", "Broadcast End", errCode);
-                        OnBroadcast?.Invoke(errCode);
-                    });
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_GetAllMasters, data))
+                {
+                    var resp = await request.Request();
+                    _isQuarying = false;
+                    Utility.LogDebug("MasterSlavesGroupService", "Broadcast End", resp.errCode);
+                    OnBroadcast?.Invoke(resp.errCode);
+                }
             }
         }
     }

@@ -44,7 +44,8 @@ var HTMLClient;
         }
         init() {
             return __awaiter(this, void 0, void 0, function* () {
-                const backendUrl = 'ws://localhost:8080/ws';
+                //const backendUrl = 'ws://localhost:8080/ws';
+                const backendUrl = 'ws://' + window.location.hostname + ':8080/ws';
                 Utility.LogDebug("[MainPageController]", "Create singleton backend start");
                 if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl)) {
                     Utility.LogDebug("[MainPageController]", "Create singleton backend end");
