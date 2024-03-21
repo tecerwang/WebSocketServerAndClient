@@ -170,7 +170,7 @@ public class MasterSlavesGroupServiceSample : MonoBehaviour
         }
     }
 
-    private void MsGroupManager_OnRegisteredAsSlave(int errCode)
+    private void MsGroupManager_OnRegisteredAsSlave(int errCode, JToken data)
     {
         ResetUIState();
     }
