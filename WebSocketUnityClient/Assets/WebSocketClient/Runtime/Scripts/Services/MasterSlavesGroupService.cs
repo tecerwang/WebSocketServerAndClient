@@ -81,7 +81,7 @@ namespace WebSocketClient
         /// <summary>
         /// ×¢²á³ÉÎª slave
         /// </summary>
-        public event Action<int> OnRegisteredAsSlave;
+        public event Action<int, JToken> OnRegisteredAsSlave;
 
         /// <summary>
         /// ×¢Ïú slave
@@ -258,7 +258,7 @@ namespace WebSocketClient
                     var resp = await request.Request();
                     _isQuarying = false;
                     clientState = resp.errCode == ErrCode.OK ? ClientState.IsSlave : ClientState.Idle;
-                    OnRegisteredAsSlave?.Invoke(resp.errCode);
+                    OnRegisteredAsSlave?.Invoke(resp.errCode, resp.data);
                     Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave End", resp.errCode);
                 }
             }
