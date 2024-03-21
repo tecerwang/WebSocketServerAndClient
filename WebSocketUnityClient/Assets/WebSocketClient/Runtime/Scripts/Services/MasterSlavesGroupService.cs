@@ -25,7 +25,7 @@ namespace WebSocketClient
                 }
                 var cid = JHelper.GetJsonString(token, "clientId");
                 var masterName = JHelper.GetJsonString(token, "masterName");
-                var isOnline = JHelper.GetJsonBool(token, "Online");
+                var isOnline = JHelper.GetJsonBool(token, "isOnline");
 
                 if (string.IsNullOrEmpty(cid))
                 {
@@ -253,7 +253,7 @@ namespace WebSocketClient
                 JObject data = new JObject();
                 data.Add("masterId", masterId);
                 Utility.LogDebug("MasterSlavesGroupService", "RegisterAsSlave Begin");
-                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsSlave, null))
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_RegisterAsSlave, data))
                 {
                     var resp = await request.Request();
                     _isQuarying = false;
