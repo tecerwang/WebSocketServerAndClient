@@ -230,8 +230,9 @@ namespace WebSocketClient.Utilities.Data
 
                 if (json is JArray array)
                 {
-                    foreach (JToken itemToken in array)
+                    foreach (var jstr in array)
                     {
+                        var itemToken = JObject.Parse(jstr.ToString());
                         int id = JHelper.GetJsonInt(itemToken, "Id");
                         int? parentId = JHelper.GetJsonInt(itemToken, "ParentId");
                         List<int> childrenIds = JHelper.GetJsonIntArray(itemToken, "ChildrenIds").ToList();
