@@ -316,7 +316,7 @@ namespace WebSocketClient
             {
                 _isQuarying = true;
                 Utility.LogDebug("MasterSlavesGroupService", "Broadcast Begin");
-                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_GetAllMasters, data))
+                using (var request = new BackendRequestAsync(serviceName, BackendOps.Cmd_Broadcast, data))
                 {
                     var resp = await request.Request();
                     _isQuarying = false;
