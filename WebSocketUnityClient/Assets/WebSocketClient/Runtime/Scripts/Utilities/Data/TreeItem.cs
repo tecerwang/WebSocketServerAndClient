@@ -44,7 +44,10 @@ namespace WebSocketClient.Utilities.Data
         {
             JObject jobj = new JObject();
             jobj.Add("Id", Id);
-            jobj.Add("ParentId", ParentId);
+            if (ParentId.HasValue)
+            {
+                jobj.Add("ParentId", ParentId);
+            }
             jobj.Add("ChildrenIds", JHelper.MakeIntArray(ChildrenIds));
             // 如果对象继承了ToJson接口，将携带的信息也传输出去
             if (typeof(T).GetInterfaces().Contains(typeof(INetworkTransport)))
@@ -234,7 +237,11 @@ namespace WebSocketClient.Utilities.Data
                     {
                         var itemToken = JObject.Parse(jstr.ToString());
                         int id = JHelper.GetJsonInt(itemToken, "Id");
-                        int? parentId = JHelper.GetJsonInt(itemToken, "ParentId");
+                        int? parentId = null;
+                        if (itemToken.ContainsKey("ParentId"))
+                        {
+                            parentId = JHelper.GetJsonInt(itemToken, "ParentId");
+                        }
                         List<int> childrenIds = JHelper.GetJsonIntArray(itemToken, "ChildrenIds").ToList();
                         // Since the data might be an object implementing INetworkTransport, we'll need to deserialize it
                         
