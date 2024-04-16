@@ -27,6 +27,30 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\TypeScriptClient\index.html" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\BackendOps.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\BackendRequest.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\ConnMonitor.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\ErrCode.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\MsgPack.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\WebsocketClient.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\clientKernal\WSBackend.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\mgr\MasterSlavesGroupService.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\utilities\EventHandler.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\utilities\TreeItem.js" />
+    <None Include="wwwroot\TypeScriptClient\lib\utilities\Utility.js" />
+    <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPage.css" />
+    <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPage.js" />
+    <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPageController.js" />
+    <None Include="wwwroot\TypeScriptClient\Pages\lib\MenuItem.js" />
+    <None Include="wwwroot\TypeScriptClient\Pages\Monitor.html" />
+    <None Include="wwwroot\TypeScriptClient\Pages\TestMasterSlaveService.html" />
+    <None Include="wwwroot\TypeScriptClient\Pages\TestMasterSlaveService.js" />
+    <None Include="wwwroot\TypeScriptClient\Pages\TestWebSocketClient.html" />
+    <None Include="wwwroot\TypeScriptClient\Pages\TestWSBackend.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.3.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

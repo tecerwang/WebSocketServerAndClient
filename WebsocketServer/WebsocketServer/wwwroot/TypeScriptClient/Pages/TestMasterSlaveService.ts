@@ -6,7 +6,7 @@
     async function init()
     {
         /// connect to server first
-        const backendUrl = 'ws://localhost:8080/ws';
+        const backendUrl = 'ws://localhost:5000/ws';
 
         // 创建一个 backend 的单例
         Utility.LogDebug("[HTML]", "Create singleton backend start");

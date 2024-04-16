@@ -15,7 +15,7 @@ var WebsocketTSClient;
     function init() {
         return __awaiter(this, void 0, void 0, function* () {
             /// connect to server first
-            const backendUrl = 'ws://localhost:8080/ws';
+            const backendUrl = 'ws://localhost:5000/ws';
             // 创建一个 backend 的单例
             Utility.LogDebug("[HTML]", "Create singleton backend start");
             if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl)) {

@@ -36,6 +36,8 @@ namespace WebSocketClient.Utilities.Data
         public int? ParentId { get; private set; }
         public List<int> ChildrenIds { get; private set; } = new List<int>();
 
+        public int Depth { get; private set; } = 0;
+
         /// <summary>
         /// to json for network transport,携带的信息继承了 ITreeItem， 也可以一并传输
         /// </summary>
@@ -48,7 +50,7 @@ namespace WebSocketClient.Utilities.Data
             {
                 jobj.Add("ParentId", ParentId);
             }
-            jobj.Add("ChildrenIds", JHelper.MakeIntArray(ChildrenIds));
+            jobj.Add("ChildrenIds", JHelper.MakeIntArray(ChildrenIds));           
             // 如果对象继承了ToJson接口，将携带的信息也传输出去
             if (typeof(T).GetInterfaces().Contains(typeof(INetworkTransport)))
             {
@@ -66,10 +68,7 @@ namespace WebSocketClient.Utilities.Data
             /// flat list tree item，用于网络传输与检索
             /// </summary>
             private readonly List<TreeItem<T>> items = new List<TreeItem<T>>();
-
-            private readonly List<TreeItem<T>> topMostItems = new List<TreeItem<T>>();
-
-
+           
             /// <summary>
             /// 获取指定 ID 的节点
             /// </summary>
@@ -99,7 +98,7 @@ namespace WebSocketClient.Utilities.Data
             /// <returns></returns>
             public IEnumerable<TreeItem<T>> GetTopMostItems()
             {
-                return topMostItems;
+                return items.Where(p => p.Depth == 0);
             }        
 
             /// <summary>
@@ -132,12 +131,7 @@ namespace WebSocketClient.Utilities.Data
 
                 TreeItem<T> itemToRemove = items.FirstOrDefault(item => item.Id == id);
                 if (itemToRemove != null)
-                {
-                    if (itemToRemove.ParentId == null)
-                    {
-                        topMostItems.Remove(itemToRemove);
-                    }
-
+                {                    
                     int removedIndex = items.IndexOf(itemToRemove);
 
                     // Remove the item from its parent's ChildrenIds list
@@ -187,12 +181,13 @@ namespace WebSocketClient.Utilities.Data
 
                 if (parent != null)
                 {
+                    item.Depth = parent.Depth + 1;
                     parent.ChildrenIds.Add(item.Id);
                 }
                 else 
                 {
                     /// 没有 parent 就是顶级节点
-                    topMostItems.Add(item);
+                    item.Depth = 0;
                 }
 
                 items.Add(item);

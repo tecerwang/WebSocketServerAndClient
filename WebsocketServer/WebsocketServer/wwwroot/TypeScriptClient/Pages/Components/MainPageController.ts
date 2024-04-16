@@ -46,12 +46,15 @@
 
         async init()
         {
-            //const backendUrl = 'ws://localhost:8080/ws';
-            var backendUrl = 'ws://' + window.location.hostname + ':8080/ws';
+            //var backendUrl = 'ws://localhost:8080/ws';
+            const hostname = window.location.hostname;
+            const port = window.location.port ? `:${window.location.port}` : '';
+            var backendUrl = `ws://${hostname}${port}/ws`;
             if (window.location.hostname == null || window.location.hostname == "")
             {
-                backendUrl = 'ws://shanxi.jeosun.cn:8080/ws';
+                backendUrl = 'ws://shanxi.jeosun.cn/ws';
             }
+            Utility.LogDebug("[MainPageController]", "backendUrl is " + backendUrl);
             Utility.LogDebug("[MainPageController]", "Create singleton backend start");
             if (WebsocketTSClient.WSBackend.CreateSingleton(backendUrl))
             {
