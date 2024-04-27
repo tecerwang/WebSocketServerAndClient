@@ -50,6 +50,8 @@ var WebsocketTSClient;
         static CreateSingleton(backendUrl) {
             if (!WSBackend.singleton) {
                 WSBackend.singleton = new WSBackend(backendUrl);
+                WSBackend.singleton._monitor = WebsocketTSClient.ConnMonitor.Create(WSBackend.singleton);
+                WSBackend.singleton._monitor.Init();
                 return true;
             }
             return false;
@@ -84,6 +86,13 @@ var WebsocketTSClient;
                 }
             });
         }
+        RetryConnect() {
+            return __awaiter(this, void 0, void 0, function* () {
+                // disconnect first and reconnect to server again,
+                this._wsClient.Close();
+                yield this.Connect2Server();
+            });
+        }
         /**
          * 创建一个请求
          * @param serviceName
@@ -99,8 +108,8 @@ var WebsocketTSClient;
             pack.serviceName = serviceName;
             pack.cmd = cmd;
             pack.data = data;
-            this._wsClient.SendMsg(JSON.stringify(pack).replace(/[\r\n\s]/g, ""));
-            return pack.rid;
+            const sended = this._wsClient.SendMsg(JSON.stringify(pack).replace(/[\r\n\s]/g, ""));
+            return sended ? pack.rid : -1;
         }
     }
     WebsocketTSClient.WSBackend = WSBackend;

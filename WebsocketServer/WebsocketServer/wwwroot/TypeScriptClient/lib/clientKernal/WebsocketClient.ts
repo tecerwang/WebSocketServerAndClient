@@ -49,7 +49,7 @@
 
             this.socket.onerror = (error: Event) =>
             {
-                this._isConnectionOpen = true;
+                this._isConnectionOpen = false;
                 console.error('[WebSocketClient] error:', error, "reconnect start");
                 this.ScheduleReconnect(); // 连接错误，开启断线重连
                 this.OnStateChanged.Trigger(false);
@@ -89,9 +89,20 @@
         /**
         * 发送消息
         */
-        SendMsg(message: string)
+        public SendMsg(message: string) : boolean 
         {
-            this.socket.send(message);
+            if (this.socket.readyState === WebSocket.OPEN)
+            {
+                console.log('[WebSocketClient] socket.readyState => ' + this.socket.readyState);
+                // Connection is open, send the message
+                this.socket.send(message);
+                return true
+            }
+            else
+            {
+                console.error('[WebSocketClient] connection is broken.');
+                return false;
+            }
         }
 
         /**

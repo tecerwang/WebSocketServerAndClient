@@ -26,12 +26,14 @@
             this._uid = Utility.GenerateUniqueId();          
             this._wsClient = new WebSocketClient(this._backendUrl, this._uid);
             this._wsClient.OnStateChanged.AddListener(this.OnWSClientStateChanged);
-            this._wsClient.OnMessageReceived.AddListener(this.OnWSClientMsgRecieved);
+            this._wsClient.OnMessageReceived.AddListener(this.OnWSClientMsgRecieved);            
         }
 
         public static CreateSingleton(backendUrl: string): boolean {
             if (!WSBackend.singleton) {
                 WSBackend.singleton = new WSBackend(backendUrl);
+                WSBackend.singleton._monitor = ConnMonitor.Create(WSBackend.singleton);
+                WSBackend.singleton._monitor.Init();
                 return true;
             }
             return false;
@@ -45,7 +47,8 @@
         }
 
         public async Connect2Server(): Promise<void> {
-            if (!this._isInited) {
+            if (!this._isInited) 
+            {
                 this._wsClient.Connect();
                 const promise = new Promise<void>((resolve, reject) => {
                     const handler = (state: boolean) => {
@@ -66,6 +69,13 @@
                 return Promise.resolve(); // Return a resolved promise if already initialized
             }
         }     
+
+        public async RetryConnect(): Promise<void>
+        {
+            // disconnect first and reconnect to server again,
+            this._wsClient.Close();
+            await this.Connect2Server();
+        }
 
         private OnWSClientStateChanged = (state: boolean): void => {
             this.OnStateChanged.Trigger(state);
@@ -105,8 +115,8 @@
             pack.serviceName = serviceName;
             pack.cmd = cmd;
             pack.data = data;
-            this._wsClient.SendMsg(JSON.stringify(pack).replace(/[\r\n\s]/g, ""));
-            return pack.rid;
+            const sended = this._wsClient.SendMsg(JSON.stringify(pack).replace(/[\r\n\s]/g, ""));
+            return sended ? pack.rid : -1;
         }             
     }
 }
