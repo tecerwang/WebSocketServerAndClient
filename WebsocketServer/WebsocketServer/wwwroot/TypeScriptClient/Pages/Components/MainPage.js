@@ -20,7 +20,7 @@ var HTMLClient;
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.type = 'text/css';
-            link.href = 'Components/MainPage.css';
+            link.href = 'Styles/MainPage.css';
             // Append the link element to the document head
             document.head.appendChild(link);
         }

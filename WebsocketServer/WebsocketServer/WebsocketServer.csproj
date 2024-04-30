@@ -39,7 +39,7 @@
     <None Include="wwwroot\TypeScriptClient\lib\utilities\EventHandler.js" />
     <None Include="wwwroot\TypeScriptClient\lib\utilities\TreeItem.js" />
     <None Include="wwwroot\TypeScriptClient\lib\utilities\Utility.js" />
-    <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPage.css" />
+    <None Include="wwwroot\TypeScriptClient\Pages\Styles\MainPage.css" />
     <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPage.js" />
     <None Include="wwwroot\TypeScriptClient\Pages\Components\MainPageController.js" />
     <None Include="wwwroot\TypeScriptClient\Pages\lib\MenuItem.js" />
@@ -56,6 +56,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\TypeScriptClient\Pages\images\" />
   </ItemGroup>
 
 </Project>

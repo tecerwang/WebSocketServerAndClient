@@ -10,6 +10,7 @@
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 8px;
+    background-image: url(../Images/IconMaster.png);
 }
 
 .mainPage .btnMenu {
