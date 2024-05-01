@@ -12,18 +12,19 @@ var HTMLClient;
             this.OnMenuItemClick = new WebsocketTSClient.EventHandler();
             /** 当前的父节点 Id */
             this.curParentId = null;
-            this.loadStyles();
+            //this.loadStyles();
             this.render();
         }
-        loadStyles() {
-            // Create a link element for the CSS file
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = 'Styles/MainPage.css';
-            // Append the link element to the document head
-            document.head.appendChild(link);
-        }
+        //private loadStyles(): void
+        //{
+        //    // Create a link element for the CSS file
+        //    const link = document.createElement('link');
+        //    link.rel = 'stylesheet';
+        //    link.type = 'text/css';
+        //    link.href = 'Styles/MainPage.css'; 
+        //    // Append the link element to the document head
+        //    document.head.appendChild(link);
+        //}
         connectedCallback() {
             // This method is called when the element is added to the DOM
             console.log('MainPage connected to the DOM');
@@ -51,10 +52,11 @@ var HTMLClient;
             // title
             const title = document.createElement('h3');
             title.textContent = '终端设备';
-            title.classList.add('title');
+            title.classList.add('subtitle');
             this.mastersPanel.appendChild(title);
             // master btns
             this.mastersBtnPanel = document.createElement('div');
+            this.mastersBtnPanel.classList.add('divBtnParent');
             this.mastersPanel.appendChild(this.mastersBtnPanel);
         }
         // 终端设备菜单控制面板
@@ -62,8 +64,9 @@ var HTMLClient;
             this.menuPanel = document.createElement('div');
             const titleDiv = document.createElement('div');
             this.menuPanelTitle = document.createElement('h3');
-            this.menuPanelTitle.classList.add('title');
+            this.menuPanelTitle.classList.add('subtitle');
             this.menuBtnsPanel = document.createElement('div');
+            this.menuBtnsPanel.classList.add('divBtnParent');
             this.btnBack = document.createElement('button');
             this.btnBack.classList.add('btnReturn');
             this.btnBack.textContent = "返回主页";

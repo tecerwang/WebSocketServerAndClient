@@ -1,60 +1,93 @@
-﻿.mainPage .btnMaster {
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-    background-image: url(../Images/IconMaster.png);
+﻿.mainPage .divBtnParent {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center; /* Align children to the middle vertically */
+    width: 90%; /* Adjust the width of the container to 90% of the screen */
+    margin: 0 auto; /* Center the container horizontally */
+    max-height: calc(100vh - 170px);
+    overflow-y: auto; /* Allow vertical scrolling when children exceed container height */
 }
 
-.mainPage .btnMenu {
-    background-color: #ffd800;
-    border: none;
-    color: black;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-}
+    .mainPage .divBtnParent .btnMaster,
+    .mainPage .divBtnParent .btnMenu,
+    .mainPage .divBtnParent .btnSealedMenu {
+        width: 250px;
+        height: auto;
+        margin: 10px;
+        background-size: 250px auto;
+        background-repeat: no-repeat;
+        border: none;
+        background-color: transparent;
+        font-size: 30px;
+        color: white;
+       
+        white-space: nowrap; /* Prevent text from wrapping */
+        overflow: hidden; /* Hide any overflowed text */
+        text-overflow: ellipsis; /* Display ellipsis for overflowed text */
+    }
 
-.mainPage .btnSealedMenu {
-    background-color: #ff6a00;
-    border: none;
-    color: black;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
-}
+    .mainPage .divBtnParent .btnMaster {
+        background-image: url('../Images/02按钮_默认.png');
+        background-position: 0px 0px;
+        padding: 0px 30px 0px 50px; /* Add padding to create space around the text */
+    }
+
+    .mainPage .divBtnParent .btnMenu {
+        background-image: url('../Images/03按钮_默认.png');
+        background-position: 0px 0px;
+        padding: 0px 50px 0px 50px; /* Add padding to create space around the text */
+        transform: scaleY(-1);
+    }
+
+    .mainPage .divBtnParent .btnSealedMenu {
+        background-image: url('../Images/03按钮_默认.png');
+        background-position: 0px 0px;
+        padding: 0px 50px 0px 50px; /* Add padding to create space around the text */
+    }
+
 
 .mainPage .btnReturn {
-    background-color: #808080;
+    position: fixed;
+    bottom: 0;
+    left: 50%; /* Align horizontally at the center */
+    transform: translateX(-50%); /* Move back horizontally by half of its own width */
+    width: 250px;
+    height: auto;
+    background-image: url('../Images/返回按钮默认.png');
+    background-size: 300px 100px;
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
     border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 8px;
+    background-color: transparent;
+    font-size: 20px;
+    color: yellow;
 }
 
 .mainPage .title {
+    /* title text with background image, align to the center and top of the div*/ /*title text with background image, align to the center and top of the div
+        can set offset
+        the bg image size is fixed,
+    */
+    height: 80px;
+    background-image: url(../Images/表头.png);
+    background-repeat: no-repeat;
+    background-position: center;
     text-align: center;
+    font-size: 36px;
+    color: white;
+    margin-top: -13px;
+    padding-top: 0px;
+}
+
+.mainPage .subtitle {
+    height: 32px;
+    background-image: url(../Images/二级标题.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    text-align: center;
+    font-size: 16px;
+    color: white;
+    margin-top: -55px;
+    padding-top: 10px;
 }

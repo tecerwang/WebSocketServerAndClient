@@ -28,21 +28,21 @@ namespace HTMLClient
         constructor()
         {
             super();
-            this.loadStyles();
+            //this.loadStyles();
             this.render();
         }
 
-        private loadStyles(): void
-        {
-            // Create a link element for the CSS file
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = 'Styles/MainPage.css'; 
+        //private loadStyles(): void
+        //{
+        //    // Create a link element for the CSS file
+        //    const link = document.createElement('link');
+        //    link.rel = 'stylesheet';
+        //    link.type = 'text/css';
+        //    link.href = 'Styles/MainPage.css'; 
 
-            // Append the link element to the document head
-            document.head.appendChild(link);
-        }
+        //    // Append the link element to the document head
+        //    document.head.appendChild(link);
+        //}
 
         connectedCallback()
         {
@@ -81,11 +81,13 @@ namespace HTMLClient
             // title
             const title = document.createElement('h3');
             title.textContent = '终端设备';
-            title.classList.add('title');
+            title.classList.add('subtitle');
             this.mastersPanel.appendChild(title);
 
             // master btns
-            this.mastersBtnPanel = document.createElement('div');                 
+            this.mastersBtnPanel = document.createElement('div');
+            this.mastersBtnPanel.classList.add('divBtnParent');
+
             this.mastersPanel.appendChild(this.mastersBtnPanel);
         }
 
@@ -95,12 +97,16 @@ namespace HTMLClient
             this.menuPanel = document.createElement('div');
             const titleDiv = document.createElement('div');
             this.menuPanelTitle = document.createElement('h3');
-            this.menuPanelTitle.classList.add('title');
+            this.menuPanelTitle.classList.add('subtitle');
+
             this.menuBtnsPanel = document.createElement('div');
+            this.menuBtnsPanel.classList.add('divBtnParent');
+
             this.btnBack = document.createElement('button');
             this.btnBack.classList.add('btnReturn');
             this.btnBack.textContent = "返回主页";
             this.btnBack.addEventListener('click', () => this.BtnReturnClick());
+
             // panel
             this.rootDiv.appendChild(this.menuPanel);
             // pane->title div
@@ -111,7 +117,6 @@ namespace HTMLClient
             titleDiv.appendChild(this.btnBack);
             // pane-> menuBtnsPanel
             this.menuPanel.appendChild(this.menuBtnsPanel);
-
             this.menuPanel.hidden = true;
         }
 
@@ -143,7 +148,9 @@ namespace HTMLClient
             button.textContent = master.masterName;
             button.id = "masterBtn_" + master.clientId;
             button.setAttribute("displayIndex", master.displayIndex.toString());
+
             button.classList.add('btnMaster');
+
             button.addEventListener('click', () =>
             {
                 this.OnMasterBtnClick.Trigger(master, button);
