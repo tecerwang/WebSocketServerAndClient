@@ -5,17 +5,17 @@
     align-items: center; /* Align children to the middle vertically */
     width: 90%; /* Adjust the width of the container to 90% of the screen */
     margin: 0 auto; /* Center the container horizontally */
-    max-height: calc(100vh - 170px);
+    max-height: calc(100vh - 230px);
     overflow-y: auto; /* Allow vertical scrolling when children exceed container height */
 }
 
     .mainPage .divBtnParent .btnMaster,
     .mainPage .divBtnParent .btnMenu,
     .mainPage .divBtnParent .btnSealedMenu {
-        width: 250px;
-        height: auto;
+        width: 275px;
+        height: 78px;
         margin: 10px;
-        background-size: 250px auto;
+        background-size: cover;
         background-repeat: no-repeat;
         border: none;
         background-color: transparent;
@@ -28,22 +28,21 @@
     }
 
     .mainPage .divBtnParent .btnMaster {
-        background-image: url('../Images/02按钮_默认.png');
+        background-image: url('../Images/按钮01_默认.png');
         background-position: 0px 0px;
-        padding: 0px 30px 0px 50px; /* Add padding to create space around the text */
+        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnMenu {
-        background-image: url('../Images/03按钮_默认.png');
+        background-image: url('../Images/按钮02_默认.png');
         background-position: 0px 0px;
-        padding: 0px 50px 0px 50px; /* Add padding to create space around the text */
-        transform: scaleY(-1);
+        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnSealedMenu {
-        background-image: url('../Images/03按钮_默认.png');
+        background-image: url('../Images/按钮02_默认.png');
         background-position: 0px 0px;
-        padding: 0px 50px 0px 50px; /* Add padding to create space around the text */
+        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
 
@@ -52,10 +51,10 @@
     bottom: 0;
     left: 50%; /* Align horizontally at the center */
     transform: translateX(-50%); /* Move back horizontally by half of its own width */
-    width: 250px;
-    height: auto;
-    background-image: url('../Images/返回按钮默认.png');
-    background-size: 300px 100px;
+    width: 262px;
+    height: 96px;
+    background-image: url('../Images/返回按钮点击.png');
+    background-size: cover;
     background-repeat: no-repeat;
     background-position: 0px 0px;
     border: none;

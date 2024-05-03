@@ -143,10 +143,18 @@
         private handleRegisteredAsSlave(errCode: number, master: MasterClient, data: any): void
         {
             Utility.LogDebug("[MainPageController]", "RegisteredAsSlave", errCode);
-            if (errCode === ErrCode.OK)
+            // if errCode is ok and data is not null and data contains menuCollection member
+            if (errCode == ErrCode.OK)
             {
                 this.masterClientId = master.clientId;
-                this.mainPage.SetupMenus(master.masterName, data.menuCollection);
+                if (data != null && 'menuCollection' in data)
+                {
+                    this.mainPage.SetupMenus(master.masterName, data.menuCollection);
+                }
+                else
+                {
+                    this.service.UnregisterFromSlave();
+                }
             }
         }
 
