@@ -12,8 +12,6 @@
     .mainPage .divBtnParent .btnMaster,
     .mainPage .divBtnParent .btnMenu,
     .mainPage .divBtnParent .btnSealedMenu {
-        width: 275px;
-        height: 78px;
         margin: 10px;
         background-size: cover;
         background-repeat: no-repeat;
@@ -28,19 +26,25 @@
     }
 
     .mainPage .divBtnParent .btnMaster {
-        background-image: url('../Images/按钮01_默认.png');
+        width: 216px;
+        height: 70px;
+        background-image: url('../Images/返回按钮_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnMenu {
+        width: 275px;
+        height: 78px;
         background-image: url('../Images/按钮02_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnSealedMenu {
-        background-image: url('../Images/按钮02_默认.png');
+        width: 275px;
+        height: 78px;
+        background-image: url('../Images/按钮01_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
@@ -59,8 +63,8 @@
     background-position: 0px 0px;
     border: none;
     background-color: transparent;
-    font-size: 20px;
-    color: yellow;
+    font-size: 30px;
+    color: #ffd800;
 }
 
 .mainPage .title {
