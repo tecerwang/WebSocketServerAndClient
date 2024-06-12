@@ -4,7 +4,7 @@
     justify-content: center;
     align-items: center; /* Align children to the middle vertically */
     width: 90%; /* Adjust the width of the container to 90% of the screen */
-    margin: 0 auto; /* Center the container horizontally */
+    margin: -120px auto 0 auto; /* Center the container horizontally */
     max-height: calc(100vh - 230px);
     overflow-y: auto; /* Allow vertical scrolling when children exceed container height */
 }
@@ -17,33 +17,32 @@
         background-repeat: no-repeat;
         border: none;
         background-color: transparent;
-        font-size: 30px;
+        font-size: 40px;
         color: white;
-       
         white-space: nowrap; /* Prevent text from wrapping */
         overflow: hidden; /* Hide any overflowed text */
         text-overflow: ellipsis; /* Display ellipsis for overflowed text */
     }
 
     .mainPage .divBtnParent .btnMaster {
-        width: 216px;
-        height: 70px;
-        background-image: url('../Images/返回按钮_默认.png');
+        width: 500px;
+        height: 100px;
+        background-image: url('../Images/按钮01_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnMenu {
-        width: 275px;
-        height: 78px;
+        width: 500px;
+        height: 100px;
         background-image: url('../Images/按钮02_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnSealedMenu {
-        width: 275px;
-        height: 78px;
+        width: 500px;
+        height: 100px;
         background-image: url('../Images/按钮01_默认.png');
         background-position: 0px 0px;
         padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
@@ -64,7 +63,7 @@
     border: none;
     background-color: transparent;
     font-size: 30px;
-    color: #ffd800;
+    color: #ffffff;
 }
 
 .mainPage .title {
@@ -72,25 +71,25 @@
         can set offset
         the bg image size is fixed,
     */
-    height: 80px;
+    height: 160px;
     background-image: url(../Images/表头.png);
     background-repeat: no-repeat;
     background-position: center;
     text-align: center;
     font-size: 36px;
     color: white;
-    margin-top: -13px;
-    padding-top: 0px;
+    margin-top: -90px;
+    padding-top: 80px;
 }
 
 .mainPage .subtitle {
-    height: 32px;
+    height: 160px;
     background-image: url(../Images/二级标题.png);
     background-repeat: no-repeat;
     background-position: center;
     text-align: center;
-    font-size: 16px;
+    font-size: 28px;
     color: white;
-    margin-top: -55px;
-    padding-top: 10px;
+    margin-top: -235px;
+    padding-top: 110px;
 }
