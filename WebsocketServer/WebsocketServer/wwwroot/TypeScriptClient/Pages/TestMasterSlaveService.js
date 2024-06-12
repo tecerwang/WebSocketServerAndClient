@@ -43,8 +43,9 @@ var WebsocketTSClient;
                 // UI 交互逻辑
                 document.getElementById('registerMasterBtn').addEventListener('click', () => {
                     const masterName = document.getElementById('inputMasterName').value;
+                    const displayIndex = document.getElementById('inputDisplayIndex').valueAsNumber;
                     if (masterName) {
-                        service.RegisterAsMaster(masterName, null);
+                        service.RegisterAsMaster(masterName, displayIndex, null);
                     }
                 });
                 document.getElementById('unRegisterMasterBtn').addEventListener('click', () => {

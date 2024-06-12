@@ -158,7 +158,7 @@
             }
         }
 
-        public RegisterAsMaster(masterName: string, masterData: any | null): void
+        public RegisterAsMaster(masterName: string, displayIndex: number, masterData: any | null): void
         {
             if (!this.isQuarying && WSBackend.singleton.IsConnected)
             {
@@ -166,6 +166,7 @@
                 var data =
                 {
                     masterName: masterName,
+                    displayIndex: displayIndex,
                     masterData: masterData
                 };
                 this.state = MasterSlavesGroupServiceState.IsMaster;

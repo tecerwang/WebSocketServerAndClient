@@ -38,9 +38,10 @@
             document.getElementById('registerMasterBtn').addEventListener('click', () =>
             {
                 const masterName = (document.getElementById('inputMasterName') as HTMLInputElement).value;
+                const displayIndex = (document.getElementById('inputDisplayIndex') as HTMLInputElement).valueAsNumber;
                 if (masterName)
                 {
-                    service.RegisterAsMaster(masterName, null);
+                    service.RegisterAsMaster(masterName, displayIndex, null);
                 }
             });
 

@@ -106,11 +106,12 @@ var WebsocketTSClient;
                 });
             }
         }
-        RegisterAsMaster(masterName, masterData) {
+        RegisterAsMaster(masterName, displayIndex, masterData) {
             if (!this.isQuarying && WebsocketTSClient.WSBackend.singleton.IsConnected) {
                 this.isQuarying = true;
                 var data = {
                     masterName: masterName,
+                    displayIndex: displayIndex,
                     masterData: masterData
                 };
                 this.state = MasterSlavesGroupServiceState.IsMaster;
