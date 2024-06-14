@@ -11,7 +11,7 @@
 
     .mainPage .divBtnParent .btnMaster,
     .mainPage .divBtnParent .btnMenu,
-    .mainPage .divBtnParent .btnSealedMenu {
+    .mainPage .divBtnParent .btnSealedMenu {       
         margin: 10px;
         background-size: cover;
         background-repeat: no-repeat;
@@ -22,30 +22,20 @@
         white-space: nowrap; /* Prevent text from wrapping */
         overflow: hidden; /* Hide any overflowed text */
         text-overflow: ellipsis; /* Display ellipsis for overflowed text */
+        height: 100px;
+        width: 500px;
     }
 
     .mainPage .divBtnParent .btnMaster {
-        width: 500px;
-        height: 100px;
         background-image: url('../Images/按钮01_默认.png');
-        background-position: 0px 0px;
-        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnMenu {
-        width: 500px;
-        height: 100px;
         background-image: url('../Images/按钮02_默认.png');
-        background-position: 0px 0px;
-        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
     .mainPage .divBtnParent .btnSealedMenu {
-        width: 500px;
-        height: 100px;
         background-image: url('../Images/按钮01_默认.png');
-        background-position: 0px 0px;
-        padding: 0px 20px 0px 20px; /* Add padding to create space around the text */
     }
 
 
